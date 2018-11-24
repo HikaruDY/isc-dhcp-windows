@@ -33,6 +33,7 @@
 #include "site.h"
 
 #include "config.h"
+#include "../Windows/WindowsDefines.h"
 
 #include <inttypes.h>
 
