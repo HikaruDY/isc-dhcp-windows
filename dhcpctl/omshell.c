@@ -39,6 +39,8 @@
 #include "dhcpctl.h"
 #include "dhcpd.h"
 
+struct collection *collections;
+
 /* Fixups */
 isc_result_t find_class (struct class **c, const char *n, const char *f, int l)
 {

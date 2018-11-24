@@ -31,6 +31,8 @@
 #include <sys/time.h>
 #include <signal.h>
 
+struct collection *collections;
+
 TIME default_lease_time = 43200; /* 12 hours... */
 TIME max_lease_time = 86400; /* 24 hours... */
 struct tree_cache *global_options[256];
@@ -90,8 +92,8 @@ enum { forward_and_append,	/* Forward and append our own relay option. */
        forward_untouched,	/* Forward without changes. */
        discard } agent_relay_mode = forward_and_replace;
 
-u_int16_t local_port;
-u_int16_t remote_port;
+extern u_int16_t local_port;
+extern u_int16_t remote_port;
 
 /* Relay agent server list. */
 struct server_list {
