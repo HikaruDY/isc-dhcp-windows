@@ -3,13 +3,12 @@
    Handling for client classes. */
 
 /*
- * Copyright (c) 2009,2012-2015 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1998-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,13 +28,6 @@
 
 #include "dhcpd.h"
 
-struct collection default_collection = {
-	(struct collection *)0,
-	"default",
-	(struct class *)0,
-};
-
-struct collection *collections = &default_collection;
 struct executable_statement *default_classification_rules;
 
 int have_billing_classes;
@@ -63,10 +55,8 @@ void classification_setup ()
 void classify_client (packet)
 	struct packet *packet;
 {
-	execute_statements ((struct binding_value **)0, packet,
-			    (struct lease *)0, (struct client_state *)0,
-			    packet -> options, (struct option_state *)0,
-			    &global_scope, default_classification_rules);
+	execute_statements (NULL, packet, NULL, NULL, packet->options, NULL,
+			    &global_scope, default_classification_rules, NULL);
 }
 
 int check_collection (packet, lease, collection)
@@ -79,6 +69,7 @@ int check_collection (packet, lease, collection)
 	int matched = 0;
 	int status;
 	int ignorep;
+	int classfound;
 
 	for (class = collection -> classes; class; class = class -> nic) {
 #if defined (DEBUG_CLASS_MATCHING)
@@ -124,9 +115,15 @@ int check_collection (packet, lease, collection)
 				   class -> submatch, MDL));
 			if (status && data.len) {
 				nc = (struct class *)0;
-				if (class_hash_lookup (&nc, class -> hash,
-						       (const char *)data.data,
-						       data.len, MDL)) {
+				classfound = class_hash_lookup (&nc, class -> hash,
+					(const char *)data.data, data.len, MDL);
+
+#ifdef LDAP_CONFIGURATION
+				if (!classfound && find_subclass_in_ldap (class, &nc, &data))
+					classfound = 1;
+#endif
+
+				if (classfound) {
 #if defined (DEBUG_CLASS_MATCHING)
 					log_info ("matches subclass %s.",
 					      print_hex_1 (data.len,

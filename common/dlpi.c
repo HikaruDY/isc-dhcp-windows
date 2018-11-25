@@ -3,12 +3,12 @@
    Data Link Provider Interface (DLPI) network interface code. */
 
 /*
- * Copyright (c) 2004-2016 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -409,6 +409,10 @@ void if_deregister_send (info)
    XXX Changes to the filter program may require changes to the constant
    offsets used in if_register_send to patch the NIT program! XXX */
 
+#if defined(RELAY_PORT)
+#error "Relay port is not yet supported for DLPI"
+#endif
+
 void if_register_receive (info)
 	struct interface_info *info;
 {
@@ -544,6 +548,9 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 		return send_fallback (interface, packet, raw,
 				      len, from, to, hto);
 
+	if (hto == NULL && interface->anycast_mac_addr.hlen)
+		hto = &interface->anycast_mac_addr;
+
 	dbuflen = 0;
 
 	/* Assemble the headers... */
@@ -597,7 +604,7 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
           else 
              memcpy ( phys, interface -> dlpi_broadcast_addr.hbuf, 
               interface -> dlpi_broadcast_addr.hlen);
-           
+
           if (sap_len < 0) { 
              memcpy ( dstaddr, phys, phys_len);
              memcpy ( (char *) &dstaddr [phys_len], sap, ABS (sap_len));

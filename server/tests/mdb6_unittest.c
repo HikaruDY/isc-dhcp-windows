@@ -1,9 +1,9 @@
 /*
- * Copyright (C) 2007-2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2017 by Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
  * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -24,7 +24,7 @@
 #include "dhcpd.h"
 #include "omapip/omapip.h"
 #include "omapip/hash.h"
-#include <dst/md5.h>
+#include <isc/md5.h>
 
 #include <atf-c.h>
 
@@ -50,6 +50,10 @@ ATF_TC_BODY(iaaddr_basic, tc)
     struct iasubopt *iaaddr;
     struct iasubopt *iaaddr_copy;
 
+    /* set up dhcp globals */
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
+
     /* and other common arguments */
     iaaddr = NULL;
     iaaddr_copy = NULL;
@@ -61,8 +65,13 @@ ATF_TC_BODY(iaaddr_basic, tc)
     if (iaaddr->state != FTS_FREE) {
         atf_tc_fail("ERROR: bad state %s:%d", MDL);
     }
-    if (iaaddr->heap_index != -1) {
-        atf_tc_fail("ERROR: bad heap_index %s:%d", MDL);
+    if (iaaddr->active_index != 0) {
+        atf_tc_fail("ERROR: bad active_index :%d %s:%d",
+            iaaddr->active_index, MDL);
+    }
+    if (iaaddr->inactive_index != 0) {
+        atf_tc_fail("ERROR: bad inactive_index %d %s:%d",
+            iaaddr->inactive_index, MDL);
     }
     if (iasubopt_reference(&iaaddr_copy, iaaddr, MDL) != ISC_R_SUCCESS) {
         atf_tc_fail("ERROR: iasubopt_reference() %s:%d", MDL);
@@ -91,13 +100,17 @@ ATF_TC_BODY(iaaddr_negative, tc)
     struct iasubopt *iaaddr;
     struct iasubopt *iaaddr_copy;
 
+    /* set up dhcp globals */
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
+
     /* tests */
     /* bogus allocate arguments */
-    if (iasubopt_allocate(NULL, MDL) != ISC_R_INVALIDARG) {
+    if (iasubopt_allocate(NULL, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: iasubopt_allocate() %s:%d", MDL);
     }
     iaaddr = (struct iasubopt *)1;
-    if (iasubopt_allocate(&iaaddr, MDL) != ISC_R_INVALIDARG) {
+    if (iasubopt_allocate(&iaaddr, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: iasubopt_allocate() %s:%d", MDL);
     }
 
@@ -106,16 +119,16 @@ ATF_TC_BODY(iaaddr_negative, tc)
     if (iasubopt_allocate(&iaaddr, MDL) != ISC_R_SUCCESS) {
         atf_tc_fail("ERROR: iasubopt_allocate() %s:%d", MDL);
     }
-    if (iasubopt_reference(NULL, iaaddr, MDL) != ISC_R_INVALIDARG) {
+    if (iasubopt_reference(NULL, iaaddr, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: iasubopt_reference() %s:%d", MDL);
     }
     iaaddr_copy = (struct iasubopt *)1;
     if (iasubopt_reference(&iaaddr_copy, iaaddr,
-                           MDL) != ISC_R_INVALIDARG) {
+                           MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: iasubopt_reference() %s:%d", MDL);
     }
     iaaddr_copy = NULL;
-    if (iasubopt_reference(&iaaddr_copy, NULL, MDL) != ISC_R_INVALIDARG) {
+    if (iasubopt_reference(&iaaddr_copy, NULL, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: iasubopt_reference() %s:%d", MDL);
     }
     if (iasubopt_dereference(&iaaddr, MDL) != ISC_R_SUCCESS) {
@@ -123,11 +136,11 @@ ATF_TC_BODY(iaaddr_negative, tc)
     }
 
     /* bogus dereference arguments */
-    if (iasubopt_dereference(NULL, MDL) != ISC_R_INVALIDARG) {
+    if (iasubopt_dereference(NULL, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: iasubopt_dereference() %s:%d", MDL);
     }
     iaaddr = NULL;
-    if (iasubopt_dereference(&iaaddr, MDL) != ISC_R_INVALIDARG) {
+    if (iasubopt_dereference(&iaaddr, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: iasubopt_dereference() %s:%d", MDL);
     }
 }
@@ -148,6 +161,10 @@ ATF_TC_BODY(ia_na_basic, tc)
     struct ia_xx *ia_na;
     struct ia_xx *ia_na_copy;
     struct iasubopt *iaaddr;
+
+    /* set up dhcp globals */
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* and other common arguments */
     iaid = 666;
@@ -208,6 +225,10 @@ ATF_TC_BODY(ia_na_manyaddrs, tc)
     struct ia_xx *ia_na;
     struct iasubopt *iaaddr;
     int i;
+
+    /* set up dhcp globals */
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* tests */
     /* lots of iaaddr that we delete */
@@ -281,13 +302,17 @@ ATF_TC_BODY(ia_na_negative, tc)
     struct ia_xx *ia_na;
     struct ia_xx *ia_na_copy;
 
+    /* set up dhcp globals */
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
+
     /* tests */
     /* bogus allocate arguments */
-    if (ia_allocate(NULL, 123, "", 0, MDL) != ISC_R_INVALIDARG) {
+    if (ia_allocate(NULL, 123, "", 0, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: ia_allocate() %s:%d", MDL);
     }
     ia_na = (struct ia_xx *)1;
-    if (ia_allocate(&ia_na, 456, "", 0, MDL) != ISC_R_INVALIDARG) {
+    if (ia_allocate(&ia_na, 456, "", 0, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: ia_allocate() %s:%d", MDL);
     }
 
@@ -297,15 +322,15 @@ ATF_TC_BODY(ia_na_negative, tc)
     if (ia_allocate(&ia_na, iaid, "TestDUID", 8, MDL) != ISC_R_SUCCESS) {
         atf_tc_fail("ERROR: ia_allocate() %s:%d", MDL);
     }
-    if (ia_reference(NULL, ia_na, MDL) != ISC_R_INVALIDARG) {
+    if (ia_reference(NULL, ia_na, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: ia_reference() %s:%d", MDL);
     }
     ia_na_copy = (struct ia_xx *)1;
-    if (ia_reference(&ia_na_copy, ia_na, MDL) != ISC_R_INVALIDARG) {
+    if (ia_reference(&ia_na_copy, ia_na, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: ia_reference() %s:%d", MDL);
     }
     ia_na_copy = NULL;
-    if (ia_reference(&ia_na_copy, NULL, MDL) != ISC_R_INVALIDARG) {
+    if (ia_reference(&ia_na_copy, NULL, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: ia_reference() %s:%d", MDL);
     }
     if (ia_dereference(&ia_na, MDL) != ISC_R_SUCCESS) {
@@ -313,7 +338,7 @@ ATF_TC_BODY(ia_na_negative, tc)
     }
 
     /* bogus dereference arguments */
-    if (ia_dereference(NULL, MDL) != ISC_R_INVALIDARG) {
+    if (ia_dereference(NULL, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: ia_dereference() %s:%d", MDL);
     }
 
@@ -353,6 +378,10 @@ ATF_TC_BODY(ipv6_pool_basic, tc)
     struct data_string ds;
     struct iasubopt *expired_iaaddr;
     unsigned int attempts;
+
+    /* set up dhcp globals */
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* and other common arguments */
     inet_pton(AF_INET6, "1:2:3:4::", &addr);
@@ -496,34 +525,38 @@ ATF_TC_BODY(ipv6_pool_negative, tc)
     struct ipv6_pool *pool;
     struct ipv6_pool *pool_copy;
 
+    /* set up dhcp globals */
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
+
     /* and other common arguments */
     inet_pton(AF_INET6, "1:2:3:4::", &addr);
 
     /* tests */
     if (ipv6_pool_allocate(NULL, D6O_IA_NA, &addr,
-                           64, 128, MDL) != ISC_R_INVALIDARG) {
+                           64, 128, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: ipv6_pool_allocate() %s:%d", MDL);
     }
     pool = (struct ipv6_pool *)1;
     if (ipv6_pool_allocate(&pool, D6O_IA_NA, &addr,
-                           64, 128, MDL) != ISC_R_INVALIDARG) {
+                           64, 128, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: ipv6_pool_allocate() %s:%d", MDL);
     }
-    if (ipv6_pool_reference(NULL, pool, MDL) != ISC_R_INVALIDARG) {
+    if (ipv6_pool_reference(NULL, pool, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: ipv6_pool_reference() %s:%d", MDL);
     }
     pool_copy = (struct ipv6_pool *)1;
-    if (ipv6_pool_reference(&pool_copy, pool, MDL) != ISC_R_INVALIDARG) {
+    if (ipv6_pool_reference(&pool_copy, pool, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: ipv6_pool_reference() %s:%d", MDL);
     }
     pool_copy = NULL;
-    if (ipv6_pool_reference(&pool_copy, NULL, MDL) != ISC_R_INVALIDARG) {
+    if (ipv6_pool_reference(&pool_copy, NULL, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: ipv6_pool_reference() %s:%d", MDL);
     }
-    if (ipv6_pool_dereference(NULL, MDL) != ISC_R_INVALIDARG) {
+    if (ipv6_pool_dereference(NULL, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: ipv6_pool_dereference() %s:%d", MDL);
     }
-    if (ipv6_pool_dereference(&pool_copy, MDL) != ISC_R_INVALIDARG) {
+    if (ipv6_pool_dereference(&pool_copy, MDL) != DHCP_R_INVALIDARG) {
         atf_tc_fail("ERROR: ipv6_pool_dereference() %s:%d", MDL);
     }
 }
@@ -551,6 +584,10 @@ ATF_TC_BODY(expire_order, tc)
     struct data_string ds;
     struct iasubopt *expired_iaaddr;
     unsigned int attempts;
+
+    /* set up dhcp globals */
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* and other common arguments */
     inet_pton(AF_INET6, "1:2:3:4::", &addr);
@@ -647,6 +684,10 @@ ATF_TC_BODY(expire_order_reduce, tc)
     struct data_string ds;
     struct iasubopt *expired_iaaddr;
     unsigned int attempts;
+
+    /* set up dhcp globals */
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* and other common arguments */
     inet_pton(AF_INET6, "1:2:3:4::", &addr);
@@ -766,6 +807,10 @@ ATF_TC_BODY(small_pool, tc)
     struct data_string ds;
     unsigned int attempts;
 
+    /* set up dhcp globals */
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
+
     /* and other common arguments */
     inet_pton(AF_INET6, "1:2:3:4::", &addr);
     addr.s6_addr[14] = 0x81;
@@ -833,6 +878,10 @@ ATF_TC_BODY(many_pools, tc)
 {
     struct in6_addr addr;
     struct ipv6_pool *pool;
+
+    /* set up dhcp globals */
+    dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+			NULL, NULL);
 
     /* and other common arguments */
     inet_pton(AF_INET6, "1:2:3:4::", &addr);

@@ -7,9 +7,9 @@
  * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -35,7 +35,6 @@
 
 #include <omapip/omapip_p.h>
 #include <errno.h>
-#include <string.h>
 #include <syslog.h>
 
 #ifdef DEBUG
@@ -74,25 +73,15 @@ void log_fatal (const char * fmt, ... )
 	  IGNORE_RET (write (STDERR_FILENO, "\n", 1));
   }
 
-#if !defined (NOMINUM)
   log_error ("%s", "");
-  log_error ("If you did not get this software from ftp.isc.org, please");
-  log_error ("get the latest from ftp.isc.org and install that before");
-  log_error ("requesting help.");
-  log_error ("%s", "");
-  log_error ("If you did get this software from ftp.isc.org and have not");
-  log_error ("yet read the README, please read it before requesting help.");
-  log_error ("If you intend to request help from the dhcp-bugs at isc.org");
-  log_error ("mailing list, please read the section on the README about");
-  log_error ("submitting bug reports and requests for help.");
-  log_error ("%s", "");
-  log_error ("Please do not under any circumstances send requests for");
-  log_error ("help directly to the authors of this software - please");
-  log_error ("send them to the appropriate mailing list as described in");
-  log_error ("the README file.");
+  log_error ("If you think you have received this message due to a bug rather");
+  log_error ("than a configuration issue please read the section on submitting");
+  log_error ("bugs on either our web page at www.isc.org or in the README file");
+  log_error ("before submitting a bug.  These pages explain the proper");
+  log_error ("process and the information we find helpful for debugging.");
   log_error ("%s", "");
   log_error ("exiting.");
-#endif
+
   if (log_cleanup)
 	  (*log_cleanup) ();
   exit (1);
@@ -362,25 +351,3 @@ char *pWSAError ()
   return "Unknown WinSock error";
 }
 #endif /* _WIN32 */
-
-/* From bind9 libisc */
-
-#ifndef _WIN32
-#define ISC_PATH_SEPARATOR '/'
-#else
-#defineISC_PATH_SEPARATOR '\\'
-#endif
-
-const char *
-isc_file_basename(const char *filename) {
-  char *s;
-
-  if (filename == NULL)
-    return (filename);
-
-  s = strrchr(filename, ISC_PATH_SEPARATOR);
-  if (s == NULL)
-    return (filename);
-
-  return (s + 1);
-}

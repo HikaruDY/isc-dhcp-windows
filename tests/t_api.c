@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
  * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: t_api.c,v 1.2.244.1 2009/01/22 02:07:42 sar Exp $ */
+/* $Id: t_api.c,v 1.4 2009/10/28 04:12:30 sar Exp $ */
 
 /*! \file */
 
@@ -43,15 +43,15 @@
 
 #include <sys/wait.h>
 
-#include <isc-dhcp/boolean.h>
-#include <isc-dhcp/commandline.h>
-#include <isc-dhcp/print.h>
-#include <isc-dhcp/string.h>
-#include <isc-dhcp/mem.h>
+#include <isc/boolean.h>
+#include <isc/commandline.h>
+#include <isc/print.h>
+#include <isc/string.h>
+#include <isc/mem.h>
 
 #ifdef DNS_SUPPORT
 #include <dns/compress.h>
-#include <dns/result.h>
+#include <omapip/result.h>
 #endif /* DNS_SUPPORT */
 
 #ifndef BIND_SUPPORT
