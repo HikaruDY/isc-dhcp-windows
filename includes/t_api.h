@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
  * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: t_api.h,v 1.2 2007/11/16 11:04:11 shane Exp $ */
+/* $Id: t_api.h,v 1.4 2009/11/24 02:06:56 sar Exp $ */
 
 #ifndef TESTS_T_API_H
 #define TESTS_T_API_H 1
@@ -24,9 +24,9 @@
 
 #include <stdio.h>
 
-#include <isc-dhcp/lang.h>
-#include <isc-dhcp/result.h>
-#include <isc-dhcp/formatcheck.h>
+#include <omapip/result.h>
+#include <isc/lang.h>
+#include <isc/formatcheck.h>
 
 /*
  *

@@ -3,12 +3,12 @@
    Definitions for address trees... */
 
 /*
- * Copyright (c) 2004,2005,2007,2009,2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2000-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -66,6 +66,16 @@ typedef struct {
 
 #ifndef  DEFAULT_MAX_RESPONSE_DELAY
 # define DEFAULT_MAX_RESPONSE_DELAY	20
+#endif
+
+/*
+ * IANA has assigned ports 647 ("dhcp-failover") and 847 ("dhcp-failover2").
+ * Of these, only port 647 is mentioned in the -12 draft revision.  We're not
+ * sure if they are supposed to indicate primary and secondary?  No matter,
+ * we'll stick to the -12 draft revision level.
+ */
+#ifndef  DEFAULT_FAILOVER_PORT
+# define DEFAULT_FAILOVER_PORT		647
 #endif
 
 #define FM_OFFSET(x) (long)(&(((failover_message_t *)0) -> x))
@@ -338,6 +348,8 @@ typedef struct _dhcp_failover_state {
 	u_int32_t max_balance, min_balance;
 	TIME last_balance, sched_balance;
 
+	u_int32_t auto_partner_down;
+
 	enum service_state service_state;
 	const char *nrr;	/* Printable reason why we're in the
 				   not_responding service state (empty
@@ -379,6 +391,8 @@ typedef struct _dhcp_failover_state {
 					   this value indicates which one. */
 	u_int32_t updxid;		/* XID of UPDREQ* message in action. */
 } dhcp_failover_state_t;
+
+extern int check_secs_byte_order; /* check byte order of secs field when true */
 
 #define DHCP_FAILOVER_VERSION		1
 #endif /* FAILOVER_PROTOCOL */

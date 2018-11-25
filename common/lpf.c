@@ -4,12 +4,12 @@
    Support Services in Vancouver, B.C. */
 
 /*
- * Copyright (c) 2004-2016 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -28,7 +28,6 @@
 
 #include "dhcpd.h"
 #if defined (USE_LPF_SEND) || defined (USE_LPF_RECEIVE)
-#include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <errno.h>
 
@@ -40,8 +39,15 @@
 #include "includes/netinet/ip.h"
 #include "includes/netinet/udp.h"
 #include "includes/netinet/if_ether.h"
-#include <net/if.h>
+#endif
 
+#if defined (USE_LPF_RECEIVE) || defined (USE_LPF_HWADDR)
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#endif
+
+#if defined (USE_LPF_SEND) || defined (USE_LPF_RECEIVE)
 /* Reinitializes the specified interface after an address change.   This
    is not required for packet-filter APIs. */
 
@@ -171,6 +177,11 @@ void if_deregister_send (info)
 extern struct sock_filter dhcp_bpf_filter [];
 extern int dhcp_bpf_filter_len;
 
+#if defined(RELAY_PORT)
+extern struct sock_filter dhcp_bpf_relay_filter [];
+extern int dhcp_bpf_relay_filter_len;
+#endif
+
 #if defined (HAVE_TR_SUPPORT)
 extern struct sock_filter dhcp_bpf_tr_filter [];
 extern int dhcp_bpf_tr_filter_len;
@@ -250,7 +261,19 @@ static void lpf_gen_filter_setup (info)
         /* Patch the server port into the LPF  program...
 	   XXX changes to filter program may require changes
 	   to the insn number(s) used below! XXX */
-	dhcp_bpf_filter [8].k = ntohs ((short)local_port);
+#if defined(RELAY_PORT)
+	if (relay_port) {
+		/*
+		 * If user defined relay UDP port, we need to filter
+		 * also on the user UDP port.
+		 */
+		p.len = dhcp_bpf_relay_filter_len;
+		p.filter = dhcp_bpf_relay_filter;
+
+		dhcp_bpf_relay_filter [10].k = ntohs (relay_port);
+	}
+#endif
+	dhcp_bpf_filter [8].k = ntohs (local_port);
 
 	if (setsockopt (info -> rfdesc, SOL_SOCKET, SO_ATTACH_FILTER, &p,
 			sizeof p) < 0) {
@@ -327,6 +350,9 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 		return send_fallback (interface, packet, raw,
 				      len, from, to, hto);
 
+	if (hto == NULL && interface->anycast_mac_addr.hlen)
+		hto = &interface->anycast_mac_addr;
+
 	/* Assemble the headers... */
 	assemble_hw_header (interface, (unsigned char *)hh, &hbufp, hto);
 	fudge = hbufp % 4;	/* IP header must be word-aligned. */
@@ -357,17 +383,30 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	unsigned char ibuf [1536];
 	unsigned bufix = 0;
 	unsigned paylen;
-	unsigned char cmsgbuf[CMSG_LEN(sizeof(struct tpacket_auxdata))];
 	struct iovec iov = {
 		.iov_base = ibuf,
 		.iov_len = sizeof ibuf,
 	};
+#ifdef PACKET_AUXDATA
+	/*
+	 * We only need cmsgbuf if we are getting the aux data and we
+	 * only get the auxdata if it is actually defined
+	 */
+	unsigned char cmsgbuf[CMSG_LEN(sizeof(struct tpacket_auxdata))];
 	struct msghdr msg = {
 		.msg_iov = &iov,
 		.msg_iovlen = 1,
 		.msg_control = cmsgbuf,
 		.msg_controllen = sizeof(cmsgbuf),
 	};
+#else
+	struct msghdr msg = {
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
+		.msg_control = NULL,
+		.msg_controllen = 0,
+	};
+#endif /* PACKET_AUXDATA */
 
 	length = recvmsg (interface->rfdesc, &msg, 0);
 	if (length <= 0)
@@ -411,7 +450,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	}
 
 	}
-#endif
+#endif /* PACKET_AUXDATA */
 
 	bufix = 0;
 	/* Decode the physical header... */
@@ -479,7 +518,9 @@ void maybe_setup_fallback ()
 		interface_dereference (&fbi, MDL);
 	}
 }
+#endif
 
+#if defined (USE_LPF_RECEIVE) || defined (USE_LPF_HWADDR)
 void
 get_hw_addr(const char *name, struct hardware *hw) {
 	int sock;

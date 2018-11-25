@@ -3,13 +3,12 @@
    Definitions for the object management API and protocol... */
 
 /*
- * Copyright (c) 2009,2013-2014,2016 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -29,8 +28,10 @@
 
 #ifndef _OMAPIP_H_
 #define _OMAPIP_H_
-#include <isc-dhcp/result.h>
+#include "result.h"
 #include <stdarg.h>
+
+#include <dns/tsec.h>
 
 typedef unsigned int omapi_handle_t;
 
@@ -148,6 +149,7 @@ typedef struct auth_key {
 	char *name;
 	char *algorithm;
 	omapi_data_string_t *key;
+	dns_tsec_t *tsec_key;
 } omapi_auth_key_t;
 
 #define OMAPI_CREATE          1
@@ -345,7 +347,9 @@ isc_result_t omapi_connection_put_name (omapi_object_t *, const char *);
 isc_result_t omapi_connection_put_string (omapi_object_t *, const char *);
 isc_result_t omapi_connection_put_handle (omapi_object_t *c,
 					  omapi_object_t *h);
-
+isc_result_t omapi_connection_put_named_uint32 (omapi_object_t *,
+						const char *,
+						u_int32_t);
 isc_result_t omapi_listen (omapi_object_t *, unsigned, int);
 isc_result_t omapi_listen_addr (omapi_object_t *,
 				omapi_addr_t *, int);

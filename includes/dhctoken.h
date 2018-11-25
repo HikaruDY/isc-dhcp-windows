@@ -3,12 +3,12 @@
    Tokens for config file lexer and parser. */
 
 /*
- * Copyright (c) 2004-2016 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -26,6 +26,11 @@
  *
  */
 
+/*
+ * The following tokens have been deprecated and aren't in use anymore.
+ * They have been left in place to avoid disturbing the code.
+ * DNS_UPDATE, DNS_DELETE, NS_UPDATE, UPDATED_DNS_RR
+ */
 enum dhcp_token {
 	SEMI = ';',
 	DOT = '.',
@@ -34,6 +39,8 @@ enum dhcp_token {
 	SLASH = '/',
 	LBRACE = '{',
 	RBRACE = '}',
+	LBRACKET = '[',
+	RBRACKET = ']',
 	LPAREN = '(',
 	RPAREN = ')',
 	EQUAL = '=',
@@ -349,13 +356,27 @@ enum dhcp_token {
 	TEMPORARY = 656,
 	PREFIX6 = 657,
 	FIXED_PREFIX6 = 658,
+	ANYCAST_MAC = 659,
 	CONFLICT_DONE = 660,
+	AUTO_PARTNER_DOWN = 661,
+	GETHOSTNAME = 662,
+	REWIND = 663,
 	INITIAL_DELAY = 664,
 	GETHOSTBYNAME = 665,
+	PRIMARY6 = 666,
+	SECONDARY6 = 667,
 	TOKEN_INFINIBAND = 668,
-	AUTHORING_BYTE_ORDER = 669,
-	TOKEN_LITTLE_ENDIAN = 670,
-	TOKEN_BIG_ENDIAN = 671
+	POOL6 = 669,
+	V6RELAY = 670,
+	V6RELOPT = 671,
+	PARSE_VENDOR_OPT = 672,
+	AUTHORING_BYTE_ORDER = 673,
+	TOKEN_LITTLE_ENDIAN = 674,
+	TOKEN_BIG_ENDIAN = 675,
+	LEASE_ID_FORMAT = 676,
+	TOKEN_HEX = 677,
+	TOKEN_OCTAL = 678,
+	KEY_ALGORITHM = 679
 };
 
 #define is_identifier(x)	((x) >= FIRST_TOKEN &&	\
