@@ -578,6 +578,10 @@ discover_interfaces(int state) {
 
 	static int setup_fallback = 0;
 
+#if defined(DHCP_WINDOWS)
+	setup_fallback = 1; //*** Avoid bug that crash on Windows (provisional)
+#endif
+
 	if (!begin_iface_scan(&ifaces)) {
 		log_fatal("Can't get list of interfaces.");
 	}
