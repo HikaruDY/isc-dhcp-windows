@@ -3,7 +3,7 @@
    DHCP Client. */
 
 /*
- * Copyright (c) 2004-2018 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2021 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -66,7 +66,7 @@ struct data_string default_duid;
 #define ASSERT_STATE(state_is, state_shouldbe) {}
 
 static const char copyright[] = 
-"Copyright 2004-2018 Internet Systems Consortium.";
+"Copyright 2004-2021 Internet Systems Consortium.";
 static const char arr [] = "All rights reserved.";
 static const char message [] = "Internet Systems Consortium DHCP Client";
 static const char url [] = 
@@ -359,9 +359,11 @@ main(int argc, char **argv) {
 			if (++i == argc) {
 				usage(use_noarg, argv[i-1]);
 			}
+			errno = 0;
 			dad_wait_time = (int)strtol(argv[i], &s, 10);
 			if (errno || (*s != '\0') || (dad_wait_time < 0)) {
-				usage("Invalid value for --dad-wait-time: %s", argv[i]);
+				usage("Invalid value for --dad-wait-time: %s",
+				      argv[i]);
 			}
 
 #endif /* DHCPv6 */
@@ -3246,9 +3248,10 @@ void client_option_envadd (struct option_cache *oc,
 						  "option - discarded",
 						  name);
 				}
-				data_string_forget (&data, MDL);
 			}
 		}
+
+		data_string_forget (&data, MDL);
 	}
 }
 

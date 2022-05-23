@@ -3,7 +3,7 @@
    Definitions for dhcpd... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -1141,6 +1141,7 @@ struct interface_info {
 	unsigned remote_id_len;		/* Length of Remote ID. */
 
 	char name [IFNAMSIZ];		/* Its name... */
+
 	int index;			/* Its if_nametoindex(). */
 	int rfdesc;			/* Its read file descriptor. */
 	int wfdesc;			/* Its write file descriptor, if
@@ -1861,7 +1862,7 @@ int parse_auth_key (struct data_string *, struct parse *);
 int parse_warn (struct parse *, const char *, ...)
 	__attribute__((__format__(__printf__,2,3)));
 struct expression *parse_domain_list(struct parse *cfile, int);
-
+struct expression *parse_domain_name(struct parse *cfile);
 
 /* tree.c */
 #if defined (NSUPDATE)
@@ -2629,7 +2630,7 @@ void commit_leases_timeout (void *);
 int commit_leases (void);
 int commit_leases_timed (void);
 void db_startup (int);
-int new_lease_file (void);
+int new_lease_file (int test_mode);
 int group_writer (struct group_object *);
 int write_ia(const struct ia_xx *);
 

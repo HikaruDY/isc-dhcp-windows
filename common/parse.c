@@ -3,7 +3,7 @@
    Common parser code for dhcpd and dhclient. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2021 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -5266,15 +5266,13 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 		break;
 
 	      case 'd': /* Domain name... */
-		val = parse_host_name (cfile);
-		if (!val) {
-			parse_warn (cfile, "not a valid domain name.");
-			skip_to_semi (cfile);
+		t = parse_domain_name(cfile);
+		if (!t) {
+			parse_warn(cfile, "not a valid domain name.");
+			skip_to_semi(cfile);
 			return 0;
 		}
-		len = strlen (val);
-		freeval = ISC_TRUE;
-		goto make_string;
+		break;
 
 	      case 't': /* Text string... */
 		token = next_token (&val, &len, cfile);
@@ -5286,7 +5284,6 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 			}
 			return 0;
 		}
-	      make_string:
 		if (!make_const_data (&t, (const unsigned char *)val,
 				      len, 1, 1, MDL))
 			log_fatal ("No memory for concatenation");
@@ -5296,7 +5293,32 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 			POST(freeval);
 		}
 		break;
-		
+
+	      case 'k': /* key name */ 
+		token = peek_token (&val, &len, cfile);
+		if (token == STRING) {
+			token = next_token (&val, &len, cfile);
+		} else {
+			val = parse_host_name(cfile);
+			if (!val) {
+				parse_warn(cfile, "not a valid key name.");
+				skip_to_semi(cfile);
+				return 0;
+			}
+			freeval = ISC_TRUE;
+		}
+
+		if (!make_const_data (&t, (const unsigned char *)val,
+				      strlen(val), 1, 1, MDL)) {
+			log_fatal ("No memory key name");
+		}
+
+		if (freeval == ISC_TRUE) {
+			dfree((char *)val, MDL);
+			freeval = ISC_FALSE;
+		}
+		break;
+
 	      case 'N':
 		f = (*fmt) + 1;
 		g = strchr (*fmt, '.');
@@ -5768,13 +5790,14 @@ int parse_X (cfile, buf, max)
 				skip_to_semi (cfile);
 				return 0;
 			}
-			convert_num (cfile, &buf [len], val, 16, 8);
-			if (len++ > max) {
+			if (len >= max) {
 				parse_warn (cfile,
 					    "hexadecimal constant too long.");
 				skip_to_semi (cfile);
 				return 0;
 			}
+			convert_num (cfile, &buf [len], val, 16, 8);
+			len++;
 			token = peek_token (&val, (unsigned *)0, cfile);
 			if (token == COLON)
 				token = next_token (&val,
@@ -5801,19 +5824,25 @@ int parse_warn (struct parse *cfile, const char *fmt, ...)
 {
 	va_list list;
 	char lexbuf [256];
-	char mbuf [1024];
-	char fbuf [1024];
+	char mbuf [1024];  /* errorwarn.c CVT_BUF_MAX + 1 */
+	char fbuf [2048];
+	char final[4096];
 	unsigned i, lix;
-	
-	do_percentm (mbuf, fmt);
+
+	/* Replace %m in fmt with errno error text */
+	do_percentm (mbuf, sizeof(mbuf), fmt);
+
 	/* %Audit% This is log output. %2004.06.17,Safe%
 	 * If we truncate we hope the user can get a hint from the log.
 	 */
+
+	/* Prepend the file and line number */
 	snprintf (fbuf, sizeof fbuf, "%s line %d: %s",
 		  cfile -> tlname, cfile -> lexline, mbuf);
-	
+
+	/* Now add the var args to the format for the final log message. */
 	va_start (list, fmt);
-	vsnprintf (mbuf, sizeof mbuf, fbuf, list);
+	vsnprintf (final, sizeof final, fbuf, list);
 	va_end (list);
 
 	lix = 0;
@@ -5829,14 +5858,14 @@ int parse_warn (struct parse *cfile, const char *fmt, ...)
 	lexbuf [lix] = 0;
 
 #ifndef DEBUG
-	syslog (LOG_ERR, "%s", mbuf);
+	syslog (LOG_ERR, "%s", final);
 	syslog (LOG_ERR, "%s", cfile -> token_line);
 	if (cfile -> lexchar < 81)
 		syslog (LOG_ERR, "%s^", lexbuf);
 #endif
 
 	if (log_perror) {
-		IGNORE_RET (write (STDERR_FILENO, mbuf, strlen (mbuf)));
+		IGNORE_RET (write (STDERR_FILENO, final, strlen (final)));
 		IGNORE_RET (write (STDERR_FILENO, "\n", 1));
 		IGNORE_RET (write (STDERR_FILENO, cfile -> token_line,
 				   strlen (cfile -> token_line)));
@@ -5932,3 +5961,42 @@ parse_domain_list(struct parse *cfile, int compress)
 	return t;
 }
 
+struct expression *
+parse_domain_name(struct parse *cfile)
+{
+	const char *val;
+	struct expression *t = NULL;
+	unsigned len;
+	int result;
+	unsigned char buf[NS_MAXCDNAME];
+
+	val = parse_host_name(cfile);
+	if (!val) {
+		return NULL;
+	}
+	result = MRns_name_pton(val, buf, sizeof(buf));
+	/* No longer need val */
+	dfree((char *)val, MDL);
+
+	/* result == 1 means the input was fully qualified.
+	 * result == 0 means the input wasn't.
+	 * result == -1 means bad things.
+	 */
+	if (result < 0) {
+		parse_warn(cfile, "Error assembling domain name: %m");
+		return NULL;
+	}
+
+	/* Compute the used length */
+	len = 0;
+	while (buf[len] != 0) {
+		len += buf[len] + 1;
+	}
+	/* Count the last label (0). */
+	len++;
+
+	if (!make_const_data(&t, buf, len, 1, 1, MDL))
+		log_fatal("No memory for domain name object.");
+
+	return t;
+}

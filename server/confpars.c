@@ -3,7 +3,7 @@
    Parser for dhcpd config file... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -777,8 +777,11 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 			et = (struct executable_statement *)0;
 			if (!parse_option_statement
 				(&et, cfile, 1, option,
-				 supersede_option_statement))
+				 supersede_option_statement)) {
+				option_dereference(&option, MDL);
 				return declaration;
+				}
+
 			option_dereference(&option, MDL);
 			goto insert_statement;
 		} else
@@ -903,7 +906,7 @@ void parse_failover_peer (cfile, group, type)
 	if (is_identifier (token) || token == STRING) {
 		name = dmalloc (strlen (val) + 1, MDL);
 		if (!name)
-			log_fatal ("no memory for peer name %s", name);
+			log_fatal ("no memory for peer name %s", val);
 		strcpy (name, val);
 	} else {
 		parse_warn (cfile, "expecting failover peer name.");
@@ -1215,7 +1218,7 @@ void parse_failover_state_declaration (struct parse *cfile,
 			name = dmalloc (strlen (val) + 1, MDL);
 			if (!name)
 				log_fatal ("failover peer name %s: no memory",
-					   name);
+					   val);
 			strcpy (name, val);
 		} else {
 			parse_warn (cfile, "expecting failover peer name.");
@@ -2652,6 +2655,7 @@ void parse_subnet_declaration (cfile, share)
 	if (token != NETMASK) {
 		parse_warn (cfile, "Expecting netmask");
 		skip_to_semi (cfile);
+		subnet_dereference (&subnet, MDL);
 		return;
 	}
 
@@ -2747,6 +2751,7 @@ parse_subnet6_declaration(struct parse *cfile, struct shared_network *share) {
 	if (token != SLASH) {
 		parse_warn(cfile, "Expecting a '/'.");
 		skip_to_semi(cfile);
+		subnet_dereference(&subnet, MDL);
 		return;
 	}
 
@@ -2754,6 +2759,7 @@ parse_subnet6_declaration(struct parse *cfile, struct shared_network *share) {
 	if (token != NUMBER) {
 		parse_warn(cfile, "Expecting a number.");
 		skip_to_semi(cfile);
+		subnet_dereference(&subnet, MDL);
 		return;
 	}
 
@@ -2763,12 +2769,14 @@ parse_subnet6_declaration(struct parse *cfile, struct shared_network *share) {
 	    (*endp != '\0')) {
 	    	parse_warn(cfile, "Expecting a number between 0 and 128.");
 		skip_to_semi(cfile);
+		subnet_dereference(&subnet, MDL);
 		return;
 	}
 
 	if (!is_cidr_mask_valid(&subnet->net, subnet->prefix_len)) {
 		parse_warn(cfile, "New subnet mask too short.");
 		skip_to_semi(cfile);
+		subnet_dereference(&subnet, MDL);
 		return;
 	}
 

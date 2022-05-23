@@ -3,7 +3,7 @@
    Operating system dependencies... */
 
 /*
- * Copyright (c) 2004-2005,2007-2010,2014 by Internet Systems Consortium,
+ * Copyright (c) 2004-2019 by Internet Systems Consortium,
  *                                        Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
@@ -135,6 +135,10 @@
 #  define USE_UPF_RECEIVE
 #endif
 
+#if defined (SO_BINDTODEVICE) && !defined (HAVE_SO_BINDTODEVICE)
+# define HAVE_SO_BINDTODEVICE
+#endif
+
 /* Porting::
 
    If you add support for sending packets directly out an interface,
@@ -258,10 +262,6 @@
 
 #if defined (ARPHRD_METRICOM) && !defined (HAVE_ARPHRD_METRICOM)
 # define HAVE_ARPHRD_METRICOM
-#endif
-
-#if defined (SO_BINDTODEVICE) && !defined (HAVE_SO_BINDTODEVICE)
-# define HAVE_SO_BINDTODEVICE
 #endif
 
 #if defined (AF_LINK) && !defined (HAVE_AF_LINK)
