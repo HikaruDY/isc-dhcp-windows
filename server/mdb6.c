@@ -1085,9 +1085,11 @@ create_lease6(struct ipv6_pool *pool, struct iasubopt **addr,
 		case D6O_IA_PD:
 			/* prefix */
 			log_error("create_lease6: prefix pool.");
+			data_string_forget(&ds, MDL);
 			return DHCP_R_INVALIDARG;
 		default:
 			log_error("create_lease6: untyped pool.");
+			data_string_forget(&ds, MDL);
 			return DHCP_R_INVALIDARG;
 		}
 
@@ -1943,7 +1945,7 @@ create_prefix6(struct ipv6_pool *pool, struct iasubopt **pref,
 		}
 		new_ds.data = new_ds.buffer->data;
 		memcpy(new_ds.buffer->data, ds.data, ds.len);
-		memcpy(new_ds.buffer->data + ds.len, &tmp, sizeof(tmp));
+		memcpy(&new_ds.buffer->data[0] + ds.len, &tmp, sizeof(tmp));
 		data_string_forget(&ds, MDL);
 		data_string_copy(&ds, &new_ds, MDL);
 		data_string_forget(&new_ds, MDL);

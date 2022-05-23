@@ -3,7 +3,7 @@
    Parser for dhclient config and lease files... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -19,8 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -47,6 +47,9 @@ static struct dhc6_addr *parse_client6_iaprefix_statement(struct parse *cfile);
 
 static void parse_lease_id_format (struct parse *cfile);
 
+extern void discard_duplicate (struct client_lease** lease_list,
+                               struct client_lease* lease);
+
 /* client-conf-file :== client-declarations END_OF_FILE
    client-declarations :== <nil>
 			 | client-declaration
@@ -59,7 +62,7 @@ isc_result_t read_client_conf ()
 	isc_result_t status;
 	unsigned code;
 
-        /* 
+        /*
          * TODO: LATER constant is very undescriptive. We should review it and
          * change it to something more descriptive or even better remove it
          * completely as it is currently not used.
@@ -159,7 +162,7 @@ isc_result_t read_client_conf ()
 		}
 	}
 #endif
-					
+
 	/* Initialize the top level client configuration. */
 	memset (&top_level_config, 0, sizeof top_level_config);
 
@@ -314,7 +317,7 @@ void read_client_duid ()
 		/*
 		 * All we care about is DUIDs - if we get anything else
 		 * just toss it and continue looking for DUIDs until we
-		 * run out of file.  
+		 * run out of file.
 		 */
 		if (token == DEFAULT_DUID) {
 			parse_client_default_duid(cfile);
@@ -374,7 +377,7 @@ void read_client_leases ()
 	end_parse (&cfile);
 }
 
-/* client-declaration :== 
+/* client-declaration :==
 	SEND option-decl |
 	DEFAULT option-decl |
 	SUPERSEDE option-decl |
@@ -427,7 +430,7 @@ void parse_client_statement (cfile, ip, config)
 			parse_semi (cfile);
 		}
 		return;
-		
+
 	      case KEY:
 		skip_token(&val, (unsigned *)0, cfile);
 		if (ip) {
@@ -574,7 +577,7 @@ void parse_client_statement (cfile, ip, config)
 			parse_warn (cfile, "expecting a policy type.");
 			skip_to_semi (cfile);
 			return;
-		} 
+		}
 		break;
 
 	      case OPTION:
@@ -702,7 +705,7 @@ void parse_client_statement (cfile, ip, config)
 			config -> omapi_port = tmp;
 		parse_semi (cfile);
 		return;
-		
+
 	      case DO_FORWARD_UPDATE:
 		skip_token(&val, (unsigned *)0, cfile);
 		token = next_token (&val, (unsigned *)0, cfile);
@@ -796,7 +799,7 @@ void parse_client_statement (cfile, ip, config)
 		strcpy (name, val);
 		parse_interface_declaration (cfile, config, name);
 		return;
-		
+
 	      case LEASE:
 		skip_token(&val, (unsigned *)0, cfile);
 		parse_client_lease_statement (cfile, 1);
@@ -1096,7 +1099,7 @@ void parse_client_lease_statement (cfile, is_static)
 	struct parse *cfile;
 	int is_static;
 {
-	struct client_lease *lease, *lp, *pl, *next;
+	struct client_lease *lease;
 	struct interface_info *ip = (struct interface_info *)0;
 	int token;
 	const char *val;
@@ -1154,22 +1157,11 @@ void parse_client_lease_statement (cfile, is_static)
 	/* The new lease may supersede a lease that's not the
 	   active lease but is still on the lease list, so scan the
 	   lease list looking for a lease with the same address, and
-	   if we find it, toss it. */
-	pl = (struct client_lease *)0;
-	for (lp = client -> leases; lp; lp = next) {
-		next = lp -> next;
-		if (lp -> address.len == lease -> address.len &&
-		    !memcmp (lp -> address.iabuf, lease -> address.iabuf,
-			     lease -> address.len)) {
-			if (pl)
-				pl -> next = next;
-			else
-				client -> leases = next;
-			destroy_client_lease (lp);
-			break;
-		} else
-			pl = lp;
-	}
+	   if we find it, toss it. We only allow supercession if
+	   the leases originated from the same source. In other words,
+	   either both are from the config file or both are from the lease
+	   file.  This keeps us from discarding fallback leases */
+	discard_duplicate (&client->leases, lease);
 
 	/* If this is a preloaded lease, just put it on the list of recorded
 	   leases - don't make it the active lease. */
@@ -1178,7 +1170,7 @@ void parse_client_lease_statement (cfile, is_static)
 		client -> leases = lease;
 		return;
 	}
-		
+
 	/* The last lease in the lease file on a particular interface is
 	   the active lease for that interface.    Of course, we don't know
 	   what the last lease in the file is until we've parsed the whole
@@ -2278,7 +2270,7 @@ void parse_reject_statement (cfile, config)
 				      "for reject statement");
 		    skip_to_semi(cfile);
 		    return;
-		} 
+		}
 
 		list = dmalloc(sizeof(struct iaddrmatchlist), MDL);
 		if (!list)
@@ -2295,7 +2287,7 @@ void parse_reject_statement (cfile, config)
 		parse_warn (cfile, "expecting semicolon.");
 		skip_to_semi (cfile);
 	}
-}	
+}
 
 /* allow-deny-keyword :== BOOTP
    			| BOOTING

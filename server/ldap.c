@@ -3,7 +3,7 @@
    Routines for reading the configuration from LDAP */
 
 /*
- * Copyright (c) 2010-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2010-2022 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2003-2006 Ntelos, Inc.
  * All rights reserved.
  *
@@ -925,7 +925,7 @@ ldap_parse_failover (struct ldap_config_stack *item, struct parse *cfile)
     ldap_value_free_len (tempbv);
 
 
-  if (primary == -1 || srvaddr[0] == '\0' || srvaddr[1] == '\0')
+  if (primary == -1 || *srvaddr[0] == '\0' || *srvaddr[1] == '\0')
     {
       log_error("Could not decide if the server type is primary"
                 " or secondary for failover peering '%s'.", peername[0]->bv_val);
@@ -1137,7 +1137,7 @@ _do_lookup_dhcp_int_option (struct option_state *options, int option_name)
 {
   struct option_cache *oc;
   struct data_string db;
-  int ret;
+  int ret = 0;
 
   memset (&db, 0, sizeof (db));
   oc = lookup_option (&server_universe, options, option_name);
@@ -1147,13 +1147,14 @@ _do_lookup_dhcp_int_option (struct option_state *options, int option_name)
                              (struct client_state *) NULL, options,
                              (struct option_state *) NULL,
                              &global_scope, oc, MDL) &&
-      db.data != NULL && *db.data != '\0')
+      db.data != NULL)
     {
-      ret = strtol ((const char *) db.data, NULL, 10);
+      if (db.len == 4) {
+         ret = getULong(db.data);
+      } 
+
       data_string_forget (&db, MDL);
     }
-  else
-    ret = 0;
 
   return (ret);
 }
@@ -1374,13 +1375,13 @@ ldap_start (void)
                                                              SV_LDAP_GSSAPI_PRINCIPAL);
 
       if (ldap_gssapi_principal == NULL) {
-          log_error("ldap_gssapi_principal is not set,"
+          log_info("ldap-gssapi-principal is not set,"
                    "GSSAPI Authentication for LDAP will not be used");
       } else {        
         ldap_gssapi_keytab = _do_lookup_dhcp_string_option (options,
                                                           SV_LDAP_GSSAPI_KEYTAB);
         if (ldap_gssapi_keytab == NULL) {
-          log_fatal("ldap_gssapi_keytab must be specified");
+          log_fatal("ldap-gssapi-keytab must be specified");
         } 
 
       	running = strdup(ldap_gssapi_principal);
