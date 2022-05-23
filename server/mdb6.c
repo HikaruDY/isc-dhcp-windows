@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2010-2012 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2007-2008 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2019 by Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -864,9 +863,11 @@ create_lease6(struct ipv6_pool *pool, struct iasubopt **addr,
 		case D6O_IA_PD:
 			/* prefix */
 			log_error("create_lease6: prefix pool.");
+			data_string_forget(&ds, MDL);
 			return ISC_R_INVALIDARG;
 		default:
 			log_error("create_lease6: untyped pool.");
+			data_string_forget(&ds, MDL);
 			return ISC_R_INVALIDARG;
 		}
 

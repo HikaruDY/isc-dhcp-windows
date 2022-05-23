@@ -3,7 +3,7 @@
    DHCP Protocol engine. */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -1204,8 +1204,11 @@ void dhcpinform (packet, ms_nulltp)
 					   MDL)) {
 			log_error ("unknown option space %s.", d1.data);
 			option_state_dereference (&options, MDL);
-			if (subnet)
+			if (subnet) {
 				subnet_dereference (&subnet, MDL);
+			}
+
+			data_string_forget (&d1, MDL);
 			return;
 		}
 
@@ -2856,6 +2859,7 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp, hp)
 					   (const char *)d1.data, d1.len,
 					   MDL)) {
 			log_error ("unknown option space %s.", d1.data);
+			data_string_forget (&d1, MDL);
 			return;
 		}
 
@@ -4361,6 +4365,7 @@ int locate_network (packet)
 			data_string_forget (&data, MDL);
 			return 0;
 		}
+
 		ia.len = 4;
 		memcpy (ia.iabuf, data.data, 4);
 		data_string_forget (&data, MDL);

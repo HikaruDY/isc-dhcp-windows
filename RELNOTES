@@ -1,16 +1,19 @@
               Internet Systems Consortium DHCP Distribution
 
-                          Version 4.1-ESV-R15-P1
-                             28 February 2018
+                           Version 4.1-ESV-R16-P1
+                               26 May 2021
 
                               Release Notes
 
                                NEW FEATURES
 
-Version 4.1-ESV-R15-P1 is a security release of an extended support version
-(ESV) release.  ESVs are intended for users who have longer upgrade
-constraints.  Please see our web page
+Version 4.1-ESV-R16-P1 is a security release of an extended support version
+(ESV) fixing possible buffer overwrite error in client and server
+while parsing haxadecimal literals in lease file. ESVs are intended for
+users who have longer upgrade constraints. Please see our web page:
+
 http://www.isc.org/downloads/software-support-policy/
+
 for more information on ESVs.
 
 ISC DHCP 4.1.x includes several new DHCPv6 features that were not included
@@ -58,11 +61,11 @@ ISC DHCP is open source software maintained by Internet Systems
 Consortium.  This product includes cryptographic software written
 by Eric Young (eay@cryptsoft.com).
 
-Our next major version of ISC DHCP, version 4.4.1, will be re-licensed under
+Our next major version of ISC DHCP, version 4.4.0, will be re-licensed under
 the Mozilla Public License, MPL 2.0.  To read the MPL 2.0 license terms, please
 refer to: https://www.mozilla.org/en-US/MPL/2.0/.
 
-This change will apply to ISC DHCP version 4.4.1 and any 4.4.x versions.  Older
+This change will apply to ISC DHCP version 4.4.0 and any 4.4.x versions.  Older
 versions already published under the ISC license will remain under the ISC
 license.  Those unsure whether or not the license change affects their use of
 ISC DHCP, or who wish to discuss how to comply with the license may contact
@@ -72,7 +75,90 @@ We welcome comments from DHCP users, about this or anything else we do.
 Email Vicky Risk, Product Manager at vicky@isc.org or discuss on
 dhcp-users@lists.isc.org.
 
+			Changes since 4.1-ESV-R16
+ ! Corrected a buffer overwrite possible when parsing hexadecimal
+   literals with more than 1024 octets. Reported by Jon Franklin from Dell,
+   and also by Pawel Wieczorkiewicz from Amazon Web Services.
+   [Gitlab #182]
+   CVE: CVE-2021-25217
+
+			Changes since 4.1-ESV-R16b1
+
+- Corrected buffer pointer logic in dhcrelay functions that manipulate
+  agent relay options. Thanks to Thomas Imbert of MSRC Vulnerabilities &
+  Mitigations for reporting the issue.
+  [#71]
+
+			Changes since 4.1-ESV-R15-P1
+
+- Made minor changes to eliminate warnings when compiled with GCC 9.
+  Thanks to Brett Neumeier for bringing the matter to our attention.
+  [Gitlab #15]
+
+- Fixed define flags when using SO_BINDTODEVICE. Thanks to Joe LeVeque for
+  reporting the issue.
+  [ISC-Bugs #19]
+
+- The "d" domain name option format was incorrectly handled as text
+  instead of RFC 1035 wire format. Thanks to Jay Doran at BlueCat Networks
+  for reporting this issue.
+  [Gitlab #2]
+
+- Corrected a number of reference counter and zero-length buffer leaks.
+  Thanks to Christopher Ertl of MSRC Vulnerabilities & Mitigations for
+  pointing them out.
+  [Gitlab #57]
+
+- The option format for the server option omapi-key was changed to a
+  format type 'k' (key name); while server options ldap-port and
+  ldap-init-retry were changed to 'L' (unsigned 32-bit integer). These
+  three options were inadvertantly broken when the 'd' format content
+  [Gitlab #68]
+
 			Changes since 4.1-ESV-R15
+
+- Corrected dhclient command line parsing for --dad-wait-time that causes
+  even valid values to fail as invalid on some environments.
+  [ISC-Bugs #46535]
+
+- Added to code ignore empty IPv4 host name option (code 12). While RFC 2132
+  states the option cannot be empty, some clients are apparently capable of
+  sending it. Prior to this the server was attempting to use it and store it
+  in the lease file causing issues with DDNS and so forth.
+  [ISC-bugs #43786]
+
+- When given the -T command line argument, in addition to reading the
+  current lease file, the server will write the leases to a temporary
+  lease file.  This can help detect issues in server configuration that
+  only surface when leases are written to the file.  The current lease
+  file will not be modified and the temporary lease file is removed upon
+  completion of the test.
+  [ISC-Bugs #22267]
+
+- The server now recognizes environment variables PATH_DHCPD_DB and
+  PATH_DHCPD_PID.  These had been incorrectly compiled out of the code
+  unless DHCPv6 support was disabled. Additionally, the server man
+  pages were corrected to accurately reflect how the server chooses
+  file names (see lease-file-name and pid-file-name statements). Thanks
+  to Fernando Soto at Bluecat for bringing this matter to our attention.
+  [ISC-Bugs #46859]
+
+- Removed an "Impossible condition" error upon exit in the dhcpd server that
+  has been shutdown via OMAPI. This condition was only apparent under Solaris
+  when building with --enable-use-sockets and --enable-ipv4-pktinfo.
+  [ISC-Bugs #36118]
+
+- Added clarifying text to dhcpd.conf.5 explaining the class match expressions
+  cannot rely on the results of executable statements.
+  [ISC-Bugs #45451]
+
+- Support for sending and receiving additional DHCP4 options has been added
+  to both the dhcpd and dhclient.  Specifically: option codes 93,94, and 97
+  (RFC 4578); code 150 (RFC 5859); and codes 209,219, and 211 (RFC 5071).
+  Beyond configuring, sending, requesting, and receiving these options neither
+  server nor client apply any additional logic based on their values.
+  Thanks to Peter Lewis for requesting this change.
+  [ISC-Bugs 47062]
 
 ! Option reference count was not correctly decremented in error path
   when parsing buffer for options. Reported by Felix Wilhelm, Google

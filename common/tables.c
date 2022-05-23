@@ -3,8 +3,7 @@
    Tables of information... */
 
 /*
- * Copyright (c) 2011-2016 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004-2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -85,10 +84,14 @@ HASH_FUNCTIONS (option_code, const unsigned *, struct option,
        the name of the set of enumeration values to parse or emit,
        followed by a '.'.   The width of the data is specified in the
        named enumeration.   Named enumerations are tracked in parse.c.
-   d - Domain name (i.e., FOO or FOO.BAR).
-   D - Domain list (i.e., example.com eng.example.com)
+   d - Domain name (e.g., FOO or FOO.BAR) no quotes,
+       on-wire format is RFC 1035.
+   D - Domain list (e.g., "example.com eng.example.com") quoted,
+       on-wire format is RFC 1035.
    c - When following a 'D' atom, enables compression pointers.
    Z - Zero-length option
+   k - Key name, unquoted string (e.g. mykey.com or some-text or abc123)
+       parsed with parse_host_name().
 */
 
 struct universe dhcp_universe;
@@ -192,9 +195,8 @@ static struct option dhcp_options[] = {
 
 	{ "client-last-transaction-time", "L",  &dhcp_universe,  91, 1 },
 	{ "associated-ip", "Ia",                &dhcp_universe,  92, 1 },
-#if 0
-	/* Defined by RFC 4578 */
-	{ "pxe-system-type", "S",		&dhcp_universe,  93, 1 },
+#if defined(RFC4578_OPTIONS)
+	{ "pxe-system-type", "Sa",		&dhcp_universe,  93, 1 },
 	{ "pxe-interface-id", "BBB",		&dhcp_universe,  94, 1 },
 	{ "pxe-client-id", "BX",		&dhcp_universe,  97, 1 },
 #endif
@@ -220,13 +222,14 @@ static struct option dhcp_options[] = {
 	{ "pxe-undefined-7", "X",		&dhcp_universe, 134, 1 },
 	{ "pxe-undefined-8", "X",		&dhcp_universe, 135, 1 },
 #endif
-#if 0
-	/* Not defined by RFC yet */
+#if defined(RFC5859_OPTIONS)
 	{ "tftp-server-address", "Ia",		&dhcp_universe, 150, 1 },
 #endif
-#if 0
-	/* PXELINUX options: defined by RFC 5071 */
+#if defined(RFC5071_OPTIONS)
+#if  0
+   /* Option 208 has been officially deprecated. Do NOT define it */
 	{ "pxelinux-magic", "BBBB",		&dhcp_universe, 208, 1 },
+#endif
 	{ "loader-configfile", "t",		&dhcp_universe, 209, 1 },
 	{ "loader-pathprefix", "t",		&dhcp_universe, 210, 1 },
 	{ "loader-reboottime", "L",		&dhcp_universe, 211, 1 },

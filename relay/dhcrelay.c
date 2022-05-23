@@ -3,7 +3,7 @@
    DHCP/BOOTP Relay Agent. */
 
 /*
- * Copyright(c) 2004-2018 by Internet Systems Consortium, Inc.("ISC")
+ * Copyright(c) 2004-2021 by Internet Systems Consortium, Inc.("ISC")
  * Copyright(c) 1997-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -109,26 +109,33 @@ struct stream_list {
 	int id;
 } *downstreams, *upstreams;
 
+#ifndef UNIT_TEST
 static struct stream_list *parse_downstream(char *);
 static struct stream_list *parse_upstream(char *);
 static void setup_streams(void);
+#endif /* UNIT_TEST */
 #endif
 
+#ifndef UNIT_TEST
 static void do_relay4(struct interface_info *, struct dhcp_packet *,
 	              unsigned int, unsigned int, struct iaddr,
 		      struct hardware *);
-static int add_relay_agent_options(struct interface_info *,
+#endif /* UNIT_TEST */
+
+extern int add_relay_agent_options(struct interface_info *,
 				   struct dhcp_packet *, unsigned,
 				   struct in_addr);
-static int find_interface_by_agent_option(struct dhcp_packet *,
+extern int find_interface_by_agent_option(struct dhcp_packet *,
 			       struct interface_info **, u_int8_t *, int);
-static int strip_relay_agent_options(struct interface_info *,
+extern int strip_relay_agent_options(struct interface_info *,
 				     struct interface_info **,
 				     struct dhcp_packet *, unsigned);
+
+#ifndef UNIT_TEST
 static void request_v4_interface(const char* name, int flags);
 
 static const char copyright[] =
-"Copyright 2004-2018 Internet Systems Consortium.";
+"Copyright 2004-2021 Internet Systems Consortium.";
 static const char arr[] = "All rights reserved.";
 static const char message[] =
 "Internet Systems Consortium DHCP Relay Agent";
@@ -188,6 +195,10 @@ static const char use_v6command[] = "Command not used for DHCPv4: %s";
 
 static void
 usage(const char *sfmt, const char *sarg) {
+        log_info("%s %s", message, PACKAGE_VERSION);
+        log_info(copyright);
+        log_info(arr);
+        log_info(url);
 
 	/* If desired print out the specific error message */
 #ifdef PRINT_SPECIFIC_CL_ERRORS
@@ -794,11 +805,13 @@ do_relay4(struct interface_info *ip, struct dhcp_packet *packet,
 				 
 }
 
+#endif /* UNIT TEST */
+
 /* Strip any Relay Agent Information options from the DHCP packet
    option buffer.   If there is a circuit ID suboption, look up the
    outgoing interface based upon it. */
 
-static int
+int
 strip_relay_agent_options(struct interface_info *in,
 			  struct interface_info **out,
 			  struct dhcp_packet *packet,
@@ -878,8 +891,13 @@ strip_relay_agent_options(struct interface_info *in,
 				return (0);
 
 			if (sp != op) {
-				memmove(sp, op, op[1] + 2);
-				sp += op[1] + 2;
+				size_t mlen = op[1] + 2;
+				memmove(sp, op, mlen);
+				sp += mlen;
+				if (sp > max) {
+					return (0);
+				}
+
 				op = nextop;
 			} else
 				op = sp = nextop;
@@ -930,7 +948,7 @@ strip_relay_agent_options(struct interface_info *in,
    we find a circuit ID that matches an existing interface do we tell
    the caller to go ahead and process the packet. */
 
-static int
+int
 find_interface_by_agent_option(struct dhcp_packet *packet,
 			       struct interface_info **out,
 			       u_int8_t *buf, int len) {
@@ -994,7 +1012,7 @@ find_interface_by_agent_option(struct dhcp_packet *packet,
  * Agent Information option tacked onto its tail.   If it is, tack
  * the option on.
  */
-static int
+int
 add_relay_agent_options(struct interface_info *ip, struct dhcp_packet *packet,
 			unsigned length, struct in_addr giaddr) {
 	int is_dhcp = 0, mms;
@@ -1102,8 +1120,13 @@ add_relay_agent_options(struct interface_info *ip, struct dhcp_packet *packet,
 			end_pad = NULL;
 
 			if (sp != op) {
-				memmove(sp, op, op[1] + 2);
-				sp += op[1] + 2;
+				size_t mlen = op[1] + 2;
+				memmove(sp, op, mlen);
+				sp += mlen;
+				if (sp > max) {
+					return (0);
+				}
+
 				op = nextop;
 			} else
 				op = sp = nextop;
@@ -1200,6 +1223,8 @@ add_relay_agent_options(struct interface_info *ip, struct dhcp_packet *packet,
 
 	return (length);
 }
+
+#ifndef UNIT_TEST
 
 #ifdef DHCPv6
 /*
@@ -1601,7 +1626,7 @@ process_down6(struct packet *packet) {
 				   &global_scope, oc, MDL) ||
 	    (relay_msg.len < offsetof(struct dhcpv6_packet, options))) {
 		log_error("Can't evaluate relay-msg.");
-		return;
+		goto cleanup;
 	}
 	msg = (const struct dhcpv6_packet *) relay_msg.data;
 
@@ -1799,7 +1824,9 @@ void request_v4_interface(const char* name, int flags) {
 		  (flags & INTERFACE_UPSTREAM ? 'Y' : 'N'),
 		  (flags & INTERFACE_DOWNSTREAM ? 'Y' : 'N'));
 
-	strncpy(tmp->name, name, len);
-	interface_snorf(tmp, (INTERFACE_REQUESTED | flags));
-	interface_dereference(&tmp, MDL);
+        memcpy(tmp->name, name, len);
+        interface_snorf(tmp, (INTERFACE_REQUESTED | flags));
+        interface_dereference(&tmp, MDL);
 }
+
+#endif /* UNIT_TEST */
