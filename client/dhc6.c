@@ -1,7 +1,7 @@
 /* dhc6.c - DHCPv6 client routines. */
 
 /*
- * Copyright (c) 2012-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2006-2010 by Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -17,8 +17,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  */
@@ -816,8 +816,7 @@ dhc6_parse_ia_na(struct dhc6_ia **pia, struct packet *packet,
 		} else {
 			log_error("Invalid IA_NA option cache.");
 			dfree(ia, MDL);
-			if (ds.len != 0)
-				data_string_forget(&ds, MDL);
+			data_string_forget(&ds, MDL);
 			return ISC_R_UNEXPECTED;
 		}
 	}
@@ -919,8 +918,7 @@ dhc6_parse_ia_ta(struct dhc6_ia **pia, struct packet *packet,
 		} else {
 			log_error("Invalid IA_TA option cache.");
 			dfree(ia, MDL);
-			if (ds.len != 0)
-				data_string_forget(&ds, MDL);
+			data_string_forget(&ds, MDL);
 			return ISC_R_UNEXPECTED;
 		}
 	}
@@ -1042,8 +1040,7 @@ dhc6_parse_ia_pd(struct dhc6_ia **pia, struct packet *packet,
 		} else {
 			log_error("Invalid IA_PD option cache.");
 			dfree(ia, MDL);
-			if (ds.len != 0)
-				data_string_forget(&ds, MDL);
+			data_string_forget(&ds, MDL);
 			return ISC_R_UNEXPECTED;
 		}
 	}
@@ -1158,8 +1155,7 @@ dhc6_parse_addrs(struct dhc6_addr **paddr, struct packet *packet,
 		} else {
 			log_error("Invalid IAADDR option cache.");
 			dfree(addr, MDL);
-			if (ds.len != 0)
-				data_string_forget(&ds, MDL);
+			data_string_forget(&ds, MDL);
 			return ISC_R_UNEXPECTED;
 		}
 	}
@@ -1283,8 +1279,7 @@ dhc6_parse_prefixes(struct dhc6_addr **ppfx, struct packet *packet,
 		} else {
 			log_error("Invalid IAPREFIX option cache.");
 			dfree(pfx, MDL);
-			if (ds.len != 0)
-				data_string_forget(&ds, MDL);
+			data_string_forget(&ds, MDL);
 			return ISC_R_UNEXPECTED;
 		}
 	}
@@ -1306,9 +1301,7 @@ dhc6_lease_destroy(struct dhc6_lease **src, const char *file, int line)
 	}
 	lease = *src;
 
-	if (lease->server_id.len != 0)
-		data_string_forget(&lease->server_id, file, line);
-
+	data_string_forget(&lease->server_id, file, line);
 	for (ia = lease->bindings ; ia != NULL ; ia = nia) {
 		nia = ia->next;
 

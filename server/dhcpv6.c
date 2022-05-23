@@ -632,13 +632,9 @@ valid_client_msg(struct packet *packet, struct data_string *client_id) {
 	ret_val = 1;
 
 exit:
-	if (data.len > 0) {
-		data_string_forget(&data, MDL);
-	}
+	data_string_forget(&data, MDL);
 	if (!ret_val) {
-		if (client_id->len > 0) {
-			data_string_forget(client_id, MDL);
-		}
+		data_string_forget(client_id, MDL);
 	}
 	return ret_val;
 }
@@ -723,12 +719,8 @@ valid_client_resp(struct packet *packet,
 
 exit:
 	if (!ret_val) {
-		if (server_id->len > 0) {
-			data_string_forget(server_id, MDL);
-		}
-		if (client_id->len > 0) {
-			data_string_forget(client_id, MDL);
-		}
+		data_string_forget(server_id, MDL);
+		data_string_forget(client_id, MDL);
 	}
 	return ret_val;
 }
@@ -840,9 +832,7 @@ valid_client_info_req(struct packet *packet, struct data_string *server_id) {
 
 exit:
 	if (!ret_val) {
-		if (server_id->len > 0) {
-			data_string_forget(server_id, MDL);
-		}
+		data_string_forget(server_id, MDL);
 	}
 	return ret_val;
 }
@@ -1034,7 +1024,8 @@ void check_pool6_threshold(struct reply_state *reply,
 				  shared_name,
 				  inet_ntop(AF_INET6, &lease->addr,
 					    tmp_addr, sizeof(tmp_addr)),
-				  used, count);
+				  (long long unsigned)(used),
+				  (long long unsigned)(count));
 		}
 		return;
 	}
@@ -1066,7 +1057,8 @@ void check_pool6_threshold(struct reply_state *reply,
 		  "address: %s; high threshold %d%% %llu/%llu.",
 		  shared_name,
 		  inet_ntop(AF_INET6, &lease->addr, tmp_addr, sizeof(tmp_addr)),
-		  poolhigh, used, count);
+		  poolhigh, (long long unsigned)(used),
+		  (long long unsigned)(count));
 
 	/* handle the low threshold now, if we don't
 	 * have one we default to 0. */
@@ -1436,12 +1428,15 @@ pick_v6_address(struct reply_state *reply)
 		log_debug("Unable to pick client address: "
 			  "no addresses available  - shared network %s: "
 			  " 2^64-1 < total, %llu active,  %llu abandoned",
-			  shared_name, active - abandoned, abandoned);
+			  shared_name, (long long unsigned)(active - abandoned),
+			  (long long unsigned)(abandoned));
 	} else {
 		log_debug("Unable to pick client address: "
 			  "no addresses available  - shared network %s: "
 			  "%llu total, %llu active,  %llu abandoned",
-			  shared_name, total, active - abandoned, abandoned);
+			  shared_name, (long long unsigned)(total),
+			  (long long unsigned)(active - abandoned),
+		          (long long unsigned)(abandoned));
 	}
 
 	return ISC_R_NORESOURCES;

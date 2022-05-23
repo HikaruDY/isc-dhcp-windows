@@ -3,7 +3,7 @@
    DHCP/BOOTP Relay Agent. */
 
 /*
- * Copyright(c) 2004-2018 by Internet Systems Consortium, Inc.("ISC")
+ * Copyright(c) 2004-2022 by Internet Systems Consortium, Inc.("ISC")
  * Copyright(c) 1997-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -19,8 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -95,8 +95,8 @@ enum { forward_and_append,	/* Forward and append our own relay option. */
        forward_untouched,	/* Forward without changes. */
        discard } agent_relay_mode = forward_and_replace;
 
-u_int16_t local_port;
-u_int16_t remote_port;
+extern u_int16_t local_port;
+extern u_int16_t remote_port;
 
 /* Relay agent server list. */
 struct server_list {
@@ -105,6 +105,8 @@ struct server_list {
 } *servers;
 
 struct interface_info *uplink = NULL;
+isc_boolean_t use_fake_gw = ISC_FALSE;
+struct in_addr gw = {0};
 
 #ifdef DHCPv6
 struct stream_list {
@@ -114,9 +116,11 @@ struct stream_list {
 	int id;
 } *downstreams, *upstreams;
 
+#ifndef UNIT_TEST
 static struct stream_list *parse_downstream(char *);
 static struct stream_list *parse_upstream(char *);
 static void setup_streams(void);
+#endif /* UNIT_TEST */
 
 /*
  * A pointer to a subscriber id to add to the message we forward.
@@ -127,22 +131,27 @@ static void setup_streams(void);
 char *dhcrelay_sub_id = NULL;
 #endif
 
+#ifndef UNIT_TEST
 static void do_relay4(struct interface_info *, struct dhcp_packet *,
 	              unsigned int, unsigned int, struct iaddr,
 		      struct hardware *);
-static int add_relay_agent_options(struct interface_info *,
-				   struct dhcp_packet *, unsigned,
-				   struct in_addr);
-static int find_interface_by_agent_option(struct dhcp_packet *,
-			       struct interface_info **, u_int8_t *, int);
-static int strip_relay_agent_options(struct interface_info *,
-				     struct interface_info **,
-				     struct dhcp_packet *, unsigned);
+#endif /* UNIT_TEST */
 
+extern int add_relay_agent_options(struct interface_info *,
+				            struct dhcp_packet *, unsigned,
+				            struct in_addr);
+extern int find_interface_by_agent_option(struct dhcp_packet *,
+			                       struct interface_info **, u_int8_t *, int);
+
+extern int strip_relay_agent_options(struct interface_info *,
+				              struct interface_info **,
+				              struct dhcp_packet *, unsigned);
+
+#ifndef UNIT_TEST
 static void request_v4_interface(const char* name, int flags);
 
 static const char copyright[] =
-"Copyright 2004-2018 Internet Systems Consortium.";
+"Copyright 2004-2022 Internet Systems Consortium.";
 static const char arr[] = "All rights reserved.";
 static const char message[] =
 "Internet Systems Consortium DHCP Relay Agent";
@@ -162,7 +171,7 @@ char *progname;
 "                     [-i interface0 [ ... -i interfaceN]\n" \
 "                     [-iu interface0 [ ... -iu interfaceN]\n" \
 "                     [-id interface0 [ ... -id interfaceN]\n" \
-"                     [-U interface]\n" \
+"                     [-U interface] [-g <ip-address>]\n" \
 "                     server0 [ ... serverN]\n\n" \
 "       %s -6   [-d] [-q] [-I] [-c <hops>]\n" \
 "                     [-p <port> | -rp <relay-port>]\n" \
@@ -182,7 +191,7 @@ char *progname;
 "                     [-i interface0 [ ... -i interfaceN]\n" \
 "                     [-iu interface0 [ ... -iu interfaceN]\n" \
 "                     [-id interface0 [ ... -id interfaceN]\n" \
-"                     [-U interface]\n" \
+"                     [-U interface] [-g <ip-address>]\n" \
 "                     server0 [ ... serverN]\n\n" \
 "       %s -6   [-d] [-q] [-I] [-c <hops>] [-p <port>]\n" \
 "                     [-pf <pid-file>] [--no-pid]\n" \
@@ -203,7 +212,7 @@ char *progname;
 "                [-i interface0 [ ... -i interfaceN]\n" \
 "                [-iu interface0 [ ... -iu interfaceN]\n" \
 "                [-id interface0 [ ... -id interfaceN]\n" \
-"                [-U interface]\n" \
+"                [-U interface] [-g <ip-address>]\n" \
 "                server0 [ ... serverN]\n\n" \
 "       %s {--version|--help|-h}"
 #else
@@ -214,7 +223,7 @@ char *progname;
 "                [-i interface0 [ ... -i interfaceN]\n" \
 "                [-iu interface0 [ ... -iu interfaceN]\n" \
 "                [-id interface0 [ ... -id interfaceN]\n" \
-"                [-U interface]\n" \
+"                [-U interface] [-g <ip-address>]\n" \
 "                server0 [ ... serverN]\n\n" \
 "       %s {--version|--help|-h}"
 #endif
@@ -228,10 +237,10 @@ char *progname;
  * the description of the command line.  The arguments provide
  * a way for the caller to request more specific information about
  * the error be printed as well.  Mostly this will be that some
- * comamnd doesn't include its argument.
+ * command doesn't include its argument.
  *
  * \param sfmt - The basic string and format for the specific error
- * \param sarg - Generally the offending argument from the comamnd line.
+ * \param sarg - Generally the offending argument from the command line.
  *
  * \return Nothing
  */
@@ -269,7 +278,7 @@ usage(const char *sfmt, const char *sarg) {
 		  isc_file_basename(progname));
 }
 
-int 
+int
 main(int argc, char **argv) {
 	isc_result_t status;
 	struct servent *ent;
@@ -310,7 +319,7 @@ main(int argc, char **argv) {
 
 #if !defined(DEBUG)
 	setlogmask(LOG_UPTO(LOG_INFO));
-#endif	
+#endif
 
 	/* Parse arguments changing no_daemon */
 	for (i = 1; i < argc; i++) {
@@ -524,7 +533,7 @@ main(int argc, char **argv) {
 				log_fatal("%s: uplink interface_allocate: %s",
 					 argv[i], isc_result_totext(status));
 			}
-		
+
 			if (strlen(argv[i]) >= sizeof(uplink->name)) {
 				log_fatal("%s: uplink name too long,"
 					  " it cannot exceed: %ld characters",
@@ -540,6 +549,21 @@ main(int argc, char **argv) {
 			/* Turn on -a, in case they don't do so explicitly */
 			add_agent_options = 1;
 			add_rfc3527_suboption = 1;
+		} else if (!strcmp(argv[i], "-g")) {
+			if (++i == argc)
+				usage(use_noarg, argv[i-1]);
+#ifdef DHCPv6
+			if (local_family_set && (local_family == AF_INET6)) {
+				usage(use_v4command, argv[i]);
+			}
+			local_family_set = 1;
+			local_family = AF_INET;
+#endif
+			if (inet_pton(AF_INET, argv[i], &gw) <= 0) {
+				usage("Invalid gateway address '%s'", argv[i]);
+			} else {
+				use_fake_gw = ISC_TRUE;
+			}
 		} else if (!strcmp(argv[i], "-D")) {
 #ifdef DHCPv6
 			if (local_family_set && (local_family == AF_INET6)) {
@@ -665,7 +689,7 @@ main(int argc, char **argv) {
 		log_info(copyright);
 		log_info(arr);
 		log_info(url);
-	} else 
+	} else
 		log_perror = 0;
 
 	/* Set default port */
@@ -789,7 +813,7 @@ main(int argc, char **argv) {
 				else {
 					fprintf(pf, "%ld\n",(long)getpid());
 					fclose(pf);
-				}	
+				}
 			}
 		}
 
@@ -871,6 +895,7 @@ do_relay4(struct interface_info *ip, struct dhcp_packet *packet,
 			return;
 		}
 
+		log_debug("BOOTREPLY giaddr: %s\n", inet_ntoa(packet->giaddr));
 		if (!(packet->flags & htons(BOOTP_BROADCAST)) &&
 			can_unicast_without_arp(out)) {
 			to.sin_addr = packet->yiaddr;
@@ -907,6 +932,10 @@ do_relay4(struct interface_info *ip, struct dhcp_packet *packet,
 			      inet_ntoa(packet->giaddr));
 			++bogus_giaddr_drops;
 			return;
+		}
+
+		if (use_fake_gw) {
+			packet->giaddr = gw;
 		}
 
 		if (send_packet(out, NULL, packet, length, out->addresses[0],
@@ -968,14 +997,16 @@ do_relay4(struct interface_info *ip, struct dhcp_packet *packet,
 			++client_packets_relayed;
 		}
 	}
-				 
+
 }
+
+#endif /* UNIT_TEST */
 
 /* Strip any Relay Agent Information options from the DHCP packet
    option buffer.   If there is a circuit ID suboption, look up the
    outgoing interface based upon it. */
 
-static int
+int
 strip_relay_agent_options(struct interface_info *in,
 			  struct interface_info **out,
 			  struct dhcp_packet *packet,
@@ -1055,8 +1086,13 @@ strip_relay_agent_options(struct interface_info *in,
 				return (0);
 
 			if (sp != op) {
-				memmove(sp, op, op[1] + 2);
-				sp += op[1] + 2;
+				size_t mlen = op[1] + 2;
+				memmove(sp, op, mlen);
+				sp += mlen;
+				if (sp > max) {
+					return (0);
+				}
+
 				op = nextop;
 			} else
 				op = sp = nextop;
@@ -1107,7 +1143,7 @@ strip_relay_agent_options(struct interface_info *in,
    we find a circuit ID that matches an existing interface do we tell
    the caller to go ahead and process the packet. */
 
-static int
+int
 find_interface_by_agent_option(struct dhcp_packet *packet,
 			       struct interface_info **out,
 			       u_int8_t *buf, int len) {
@@ -1171,7 +1207,7 @@ find_interface_by_agent_option(struct dhcp_packet *packet,
  * Agent Information option tacked onto its tail.   If it is, tack
  * the option on.
  */
-static int
+int
 add_relay_agent_options(struct interface_info *ip, struct dhcp_packet *packet,
 			unsigned length, struct in_addr giaddr) {
 	int is_dhcp = 0, mms;
@@ -1284,8 +1320,13 @@ add_relay_agent_options(struct interface_info *ip, struct dhcp_packet *packet,
 			end_pad = NULL;
 
 			if (sp != op) {
-				memmove(sp, op, op[1] + 2);
-				sp += op[1] + 2;
+				size_t mlen = op[1] + 2;
+				memmove(sp, op, mlen);
+				sp += mlen;
+				if (sp > max) {
+					return (0);
+				}
+
 				op = nextop;
 			} else
 				op = sp = nextop;
@@ -1415,6 +1456,7 @@ add_relay_agent_options(struct interface_info *ip, struct dhcp_packet *packet,
 }
 
 #ifdef DHCPv6
+#ifndef UNIT_TEST
 /*
  * Parse a downstream argument: [address%]interface[#index].
  */
@@ -1726,7 +1768,7 @@ process_up6(struct packet *packet, struct stream_list *dp) {
 	if (!option_state_allocate(&opts, MDL)) {
 		log_fatal("No memory for upwards options.");
 	}
-	
+
 	/* Add an interface-id (if used). */
 	if (use_if_id) {
 		int if_id;
@@ -1763,7 +1805,7 @@ process_up6(struct packet *packet, struct stream_list *dp) {
 			return;
 		}
 	}
-		
+
 
 #if defined(RELAY_PORT)
 	/*
@@ -1802,7 +1844,7 @@ process_up6(struct packet *packet, struct stream_list *dp) {
 	/* Finish the relay-forward message. */
 	cursor += store_options6(forw_data + cursor,
 				 sizeof(forw_data) - cursor,
-				 opts, packet, 
+				 opts, packet,
 				 required_forw_opts, NULL);
 	option_state_dereference(&opts, MDL);
 
@@ -1812,7 +1854,7 @@ process_up6(struct packet *packet, struct stream_list *dp) {
 			     (size_t) cursor, &up->link);
 	}
 }
-			     
+
 /*
  * Process a packet downwards, i.e., from server to client.
  */
@@ -1869,7 +1911,7 @@ process_down6(struct packet *packet) {
 				   &global_scope, oc, MDL) ||
 	    (relay_msg.len < offsetof(struct dhcpv6_packet, options))) {
 		log_error("Can't evaluate relay-msg.");
-		return;
+		goto cleanup;
 	}
 	msg = (const struct dhcpv6_packet *) relay_msg.data;
 
@@ -1999,12 +2041,14 @@ process_down6(struct packet *packet) {
 	if (if_id.data != NULL)
 		data_string_forget(&if_id, MDL);
 }
+#endif /* UNIT_TEST */
 
 /*
  * Called by the dispatch packet handler with a decoded packet.
  */
 void
 dhcpv6(struct packet *packet) {
+#ifndef UNIT_TEST
 	struct stream_list *dp;
 
 	/* Try all relay-replies downwards. */
@@ -2027,8 +2071,9 @@ dhcpv6(struct packet *packet) {
 
 	log_info("Can't process packet from interface '%s'.",
 		 packet->interface->name);
+#endif /* UNIT_TEST */
 }
-#endif
+#endif /* DHCPv6 */
 
 /* Stub routines needed for linking with DHCP libraries. */
 void
@@ -2076,6 +2121,9 @@ dhcp_set_control_state(control_object_state_t oldstate,
 	if (newstate != server_shutdown)
 		return ISC_R_SUCCESS;
 
+	/* Log shutdown on signal. */
+	log_info("Received signal %d, initiating shutdown.", shutdown_signal);
+
 	if (no_pid_file == ISC_FALSE)
 		(void) unlink(path_dhcrelay_pid);
 
@@ -2119,7 +2167,7 @@ void request_v4_interface(const char* name, int flags) {
 		  (flags & INTERFACE_UPSTREAM ? 'Y' : 'N'),
 		  (flags & INTERFACE_DOWNSTREAM ? 'Y' : 'N'));
 
-        strncpy(tmp->name, name, len);
+        memcpy(tmp->name, name, len);
         interface_snorf(tmp, (INTERFACE_REQUESTED | flags));
         interface_dereference(&tmp, MDL);
 }

@@ -3,7 +3,7 @@
    Tables of information only used by server... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -19,8 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -66,7 +66,7 @@ struct failover_option_info ft_options [] =
 	  FM_OFFSET(ip_flags), FTB_IP_FLAGS },
 	{ FTO_LEASE_EXPIRY, "lease-expiration-time", FT_UINT32, 1,
 	  FM_OFFSET(expiry), FTB_LEASE_EXPIRY },
-	{ FTO_MAX_UNACKED, "max-unacked-bndupd", FT_UINT32, 1, 
+	{ FTO_MAX_UNACKED, "max-unacked-bndupd", FT_UINT32, 1,
 	  FM_OFFSET(max_unacked), FTB_MAX_UNACKED },
 	{ FTO_MCLT, "MCLT", FT_UINT32, 1, FM_OFFSET(mclt), FTB_MCLT },
 	{ FTO_MESSAGE, "message", FT_TEXT, 0,
@@ -211,7 +211,7 @@ static struct option server_options[] = {
 	{ "limited-broadcast-address", "I",	&server_universe,  33, 1 },
 	{ "remote-port", "S",			&server_universe,  34, 1 },
 	{ "local-address", "I",			&server_universe,  35, 1 },
-	{ "omapi-key", "d",			&server_universe,  36, 1 },
+	{ "omapi-key", "k",			&server_universe,  36, 1 },
 	{ "stash-agent-options", "f",		&server_universe,  37, 1 },
 	{ "ddns-ttl", "T",			&server_universe,  38, 1 },
 	{ "ddns-update-style", "Nddns-styles.",	&server_universe,  39, 1 },
@@ -241,7 +241,7 @@ static struct option server_options[] = {
 #endif
 #if defined(LDAP_CONFIGURATION)
 	{ "ldap-server", "t",			&server_universe,  60, 1 },
-	{ "ldap-port", "d",			&server_universe,  61, 1 },
+	{ "ldap-port", "L",			&server_universe,  61, 1 },
 	{ "ldap-username", "t",			&server_universe,  62, 1 },
 	{ "ldap-password", "t",			&server_universe,  63, 1 },
 	{ "ldap-base-dn", "t",			&server_universe,  64, 1 },
@@ -259,7 +259,7 @@ static struct option server_options[] = {
 	{ "ldap-tls-crlcheck", "Nldap-tls-crlcheck.",	&server_universe,  75, 1 },
 	{ "ldap-tls-ciphers", "t",		&server_universe,  76, 1 },
 	{ "ldap-tls-randfile", "t",		&server_universe,  77, 1 },
-	{ "ldap-init-retry", "d",       	&server_universe,  SV_LDAP_INIT_RETRY, 1 },
+	{ "ldap-init-retry", "L",       	&server_universe,  SV_LDAP_INIT_RETRY, 1 },
 #endif /* LDAP_USE_SSL */
 #if defined(LDAP_USE_GSSAPI)
 	{ "ldap-gssapi-keytab", "t",        &server_universe,  SV_LDAP_GSSAPI_KEYTAB, 1},
@@ -291,6 +291,8 @@ static struct option server_options[] = {
 	{ "release-on-roam", "f",	&server_universe,  SV_RELEASE_ON_ROAM, 1 },
 	{ "local-address6", "6",	&server_universe,  SV_LOCAL_ADDRESS6, 1 },
 	{ "bind-local-address6", "f",	&server_universe,  SV_BIND_LOCAL_ADDRESS6, 1 },
+	{ "ping-cltt-secs", "T",	&server_universe,  SV_PING_CLTT_SECS, 1 },
+	{ "ping-timeout-ms", "T",       &server_universe,  SV_PING_TIMEOUT_MS, 1 },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 

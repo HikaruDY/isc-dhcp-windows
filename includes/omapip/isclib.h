@@ -3,7 +3,7 @@
    connections to the isc and dns libraries */
 
 /*
- * Copyright (c) 2009-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2022 Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,8 +18,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   http://www.isc.org/
  *
@@ -47,6 +47,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
+
+#include <isc/boolean.h>
+#include <isc/int.h>
 
 #include <isc/buffer.h>
 #include <isc/lex.h>
@@ -91,7 +94,8 @@
 typedef struct dhcp_context {
 	isc_mem_t	*mctx;
 	isc_appctx_t	*actx;
-	int              actx_started;
+	int              actx_started; // ISC_TRUE if ctxstart has been called
+	int              actx_running; // ISC_TRUE if ctxrun has been called
 	isc_taskmgr_t	*taskmgr;
 	isc_task_t	*task;
 	isc_socketmgr_t *socketmgr;
@@ -138,6 +142,9 @@ void isclib_cleanup(void);
 void dhcp_signal_handler(int signal);
 extern int shutdown_signal;
 
+#if defined (NSUPDATE)
 isc_result_t dns_client_init();
+#endif /* defined NSUPDATE */
+
 
 #endif /* ISCLIB_H */
