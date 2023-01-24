@@ -2,7 +2,7 @@
 pushd "%~dp0"
 REM /*
 REM // ISC DHCPd 4.x for Windows (with Cygwin) patch
-REM //	(C)2016 Hikaru Kurosaki
+REM //	(C)2016-2023 Hikaru Kurosaki
 REM //	http://xprj.org/
 REM */
 
@@ -24,7 +24,7 @@ pushd ..
 	rd /s /q "%~dp0\DHCP"
 	mkdir "%~dp0\DHCP"
 
- 	make LDFLAGS="%~dp0\VirtualFunction.o" CFLAGS="-g -O2 -fno-strict-aliasing -I%BASE%/../includes -I%BASE%/../bind/include -I%BASE%" %* || GOTO ERR "Make failed"
+	make LDFLAGS="%~dp0\VirtualFunction.o" CFLAGS="-DDHCP_WINDOWS -g -O2 -fno-strict-aliasing -I%BASE%/../includes -I%BASE%/../bind/include -I%BASE%" %* || GOTO ERR "Make failed"
 	make install prefix="%DSTDIR%" || GOTO ERR "Install failed"
 
 	echo "I: Build successful. Output directory is '%DSTDIR%'"

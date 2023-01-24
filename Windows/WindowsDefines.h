@@ -6,7 +6,7 @@
 
 /*
 	Add
-		#include "../Windows/WindowsDefine.h" 
+		#include <WindowsDefine.h>
 	to "includes/dhcpd.h" after [#include "config.h"]
 	OR "includes/config.h" EOF
 */

@@ -27,7 +27,10 @@
  */
 
 #include "config.h"
-#include "../Windows/WindowsDefines.h"
+
+#if defined(DHCP_WINDOWS) //***
+#include <WindowsDefines.h>
+#endif //DHCP_WINDOWS
 
 #ifndef __CYGWIN32__
 #include <sys/types.h>
