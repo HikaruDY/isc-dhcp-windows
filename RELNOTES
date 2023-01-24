@@ -1,20 +1,16 @@
               Internet Systems Consortium DHCP Distribution
 
-                           Version 4.1-ESV-R16-P1
-                               26 May 2021
+                           Version 4.1-ESV-R16-P2
+                              5 October 2022
+                               Release Notes
 
-                              Release Notes
+Version 4.1-ESV-R16-P2 is a security release of an extended support version
+(ESV) fixing a possible reference counter overflow in the server while adding
+options to lease query responses and a possible memory leak in the client and
+server when parsing inbound packets with malformed FQDN options.  
 
-                               NEW FEATURES
-
-Version 4.1-ESV-R16-P1 is a security release of an extended support version
-(ESV) fixing possible buffer overwrite error in client and server
-while parsing haxadecimal literals in lease file. ESVs are intended for
-users who have longer upgrade constraints. Please see our web page:
-
-http://www.isc.org/downloads/software-support-policy/
-
-for more information on ESVs.
+NOTE: This software is now End-Of-Life. This is the final release planned. 
+We will continue to keep the public issue tracker and user mailing list open.
 
 ISC DHCP 4.1.x includes several new DHCPv6 features that were not included
 in DHCP 4.0.x.  These include:
@@ -30,9 +26,7 @@ in DHCP 4.0.x.  These include:
 - Basic and partial DHCPv6 leasequery support
 
 There are a number of DHCPv6 limitations and features missing in this
-release, which will be addressed in the future:
-
-- Only Solaris, Linux, FreeBSD, NetBSD, and OpenBSD are supported.
+release:
 
 - Only a single address is supported per IA.
 
@@ -61,13 +55,12 @@ ISC DHCP is open source software maintained by Internet Systems
 Consortium.  This product includes cryptographic software written
 by Eric Young (eay@cryptsoft.com).
 
-Our next major version of ISC DHCP, version 4.4.0, will be re-licensed under
+Our next major version of ISC DHCP, version 4.4.0, has been re-licensed under
 the Mozilla Public License, MPL 2.0.  To read the MPL 2.0 license terms, please
 refer to: https://www.mozilla.org/en-US/MPL/2.0/.
 
-This change will apply to ISC DHCP version 4.4.0 and any 4.4.x versions.  Older
-versions already published under the ISC license will remain under the ISC
-license.  Those unsure whether or not the license change affects their use of
+This branch, 4.1-ESV, remains under the ISC license.  
+Those unsure whether or not the license change affects their use of
 ISC DHCP, or who wish to discuss how to comply with the license may contact
 ISC at info@isc.org or use https://www.isc.org/mission/contact/.
 
@@ -75,12 +68,26 @@ We welcome comments from DHCP users, about this or anything else we do.
 Email Vicky Risk, Product Manager at vicky@isc.org or discuss on
 dhcp-users@lists.isc.org.
 
+			Changes since 4.1-ESV-R16-P1
+
+! Corrected a reference count leak that occurs when the server builds
+  responses to leasequery packets.  Thanks to VictorV of Cyber Kunlun
+  Lab for reporting the issue.
+  [Gitlab #253]
+  CVE: CVE-2022-2928
+
+! Corrected a memory leak that occurs when unpacking a packet that has an
+  FQDN option (81) that contains a label with length greater than 63 bytes.
+  [Gitlab #254]
+  CVE: CVE-2022-2929
+
 			Changes since 4.1-ESV-R16
- ! Corrected a buffer overwrite possible when parsing hexadecimal
-   literals with more than 1024 octets. Reported by Jon Franklin from Dell,
-   and also by Pawel Wieczorkiewicz from Amazon Web Services.
-   [Gitlab #182]
-   CVE: CVE-2021-25217
+
+! Corrected a buffer overwrite possible when parsing hexadecimal
+  literals with more than 1024 octets. Reported by Jon Franklin from Dell,
+  and also by Pawel Wieczorkiewicz from Amazon Web Services.
+  [Gitlab #182]
+  CVE: CVE-2021-25217
 
 			Changes since 4.1-ESV-R16b1
 
@@ -198,7 +205,7 @@ dhcp-users@lists.isc.org.
   "Run out of memory." on the standard error and exists with status 1.
   [ISC-Bugs #32744]
 
-- The linux interface discovery code has been modified to use getifaddrs() 
+- The linux interface discovery code has been modified to use getifaddrs()
   as is done for BSD and OS-X.  Prior to this the code would only recognize
   the first address on an interface and thereby omit vlans.
   Thanks to Jiri Popelka at Redhat, Marius Tomaschewski at SUSE, and Wei
@@ -401,7 +408,7 @@ dhcp-users@lists.isc.org.
   [ISC-Bugs #40754]
   [ISC-Bugs #40823]
 
-- Corrected compilation errors that prohibited building the server's 
+- Corrected compilation errors that prohibited building the server's
   ATF unit tests when failover is disabled.
   [ISC-Bugs #40372]
 
@@ -541,7 +548,7 @@ dhcp-users@lists.isc.org.
   [ISC-Bugs #21235]
 
 - Write out the DUID server id on startup in all cases, previously if it
-  was read in from server-duid option in the config or lease files for 
+  was read in from server-duid option in the config or lease files for
   DHCPv4 it would not be written to the new lease file.
   [ISC-Bugs #37791]
 
@@ -647,8 +654,8 @@ dhcp-users@lists.isc.org.
   patch.
   [ISC-Bugs #36653]
 
-- Corrected rate limiting checks for bad packet logging. Thanks to Tobias 
-  Stoeckmann working with the OpenBSD project who spotted the issue and 
+- Corrected rate limiting checks for bad packet logging. Thanks to Tobias
+  Stoeckmann working with the OpenBSD project who spotted the issue and
   provided the patch.
   [ISC-Bugs #36897]
 
@@ -791,7 +798,7 @@ dhcp-users@lists.isc.org.
 - Tidy up several small tickets.
   Correct parsing of DUID from config file, previously the LL type
   was put in the wrong place in the DUID string.
-  [ISC-Bugs #20962] 
+  [ISC-Bugs #20962]
   Add code to parse "do-forward-updates" as well as "do-forward-update"
   Thanks to Jiri Popelka at Red Hat.
   [ISC-Bugs #31328]
@@ -967,7 +974,7 @@ dhcp-users@lists.isc.org.
   and patches.
   [ISC-Bugs #23833]
 
-- Parsing unquoted base64 strings improved. Parser now properly handles 
+- Parsing unquoted base64 strings improved. Parser now properly handles
   strings that contain reserved names. [ISC-Bugs #23048]
 
 - Modify the nak_lease function to make some attempts to find a
@@ -1138,7 +1145,7 @@ dhcp-users@lists.isc.org.
 
 - Add AM_MAINTAINER_MODE to configure.ac to avoid rebuilding
   configuration files.  [ISC-Bugs #24107]
- 
+
 ! Add a check for a null pointer before calling the regexec function.
   Without this check we could, under some circumstances, pass
   a null pointer to the regexec function causing it to segfault.
@@ -1151,9 +1158,9 @@ dhcp-users@lists.isc.org.
 - Compilation fix for gcc 4.5 or newer in server/ddns.c
   [ISC-Bugs #24973]
 
-- Strict checks for content of domain-name DHCPv4 option can now be 
-  configured during compilation time. Even though RFC2132 does not allow 
-  to store more than one domain in domain-name option, such behavior is 
+- Strict checks for content of domain-name DHCPv4 option can now be
+  configured during compilation time. Even though RFC2132 does not allow
+  to store more than one domain in domain-name option, such behavior is
   now enabled by default, but this may change some time in the future.
   See ACCEPT_LIST_IN_DOMAIN_NAME define in includes/site.h.
   [ISC-Bugs #24167]
@@ -1204,10 +1211,10 @@ dhcp-users@lists.isc.org.
 - 'dhclient' no longer waits a random interval after first starting up to
   begin in the INIT state.  This conforms to RFC 2131, but elects not to
   implement a 'SHOULD' direction in section 4.1. [ISC-Bugs #19660]
-  
-- Added 'initial-delay' parameter that specifies maximum amount of time 
-  before client goes to the INIT state. The default value is 0. In previous 
-  versions of the code client could wait up to 5 seconds. The old behavior 
+
+- Added 'initial-delay' parameter that specifies maximum amount of time
+  before client goes to the INIT state. The default value is 0. In previous
+  versions of the code client could wait up to 5 seconds. The old behavior
   may be restored by using 'initial-delay 5;' in the client config file.
   [ISC-Bugs #19660]
 
@@ -1366,7 +1373,7 @@ dhcp-users@lists.isc.org.
   [ISC-Bugs #20107] clarify description of ia-pd and ia-prefix.
   [ISC-Bugs #20245] clarify editing the failover state in a lease file to put
   a server into the PARTNER-DOWN state.
- 
+
 - 'get-host-names true;' now also works even if 'use-host-decl-names true;'
   was also configured.  The nature of this repair also fixes another
   error; the host-name supplied by a client is no longer overridden by a
@@ -1377,7 +1384,7 @@ dhcp-users@lists.isc.org.
 - The .TH tag for the dhcp-options manpage was typo repaired
   thanks to a report from jidanni and the Debian package maintenance
   team.  [ISC-Bugs #21676] {Debian Bug#563613}
- 
+
 - More documentation changes - primarily to put the options in the dhclient
   and dhcpd man pages into the standard form.  Thanks in part to a patch
   from David Cantrell at Red Hat.
@@ -1400,7 +1407,7 @@ dhcp-users@lists.isc.org.
   in dhcpd - based on a patch from David Cantrell at Red Hat.
   [ISC-Bugs #20039] Correct some error messages in dhcpd.c
   [ISC-Bugs #20070] Better range check on values when creating a DHCID.
-  [ISC-Bugs #20198] Avoid writing past the end of the field when adding 
+  [ISC-Bugs #20198] Avoid writing past the end of the field when adding
   overly long file or server names to a packet and add a log message
   if the configuration supplied overly long names for these fields.
   Thanks to Martin Pala.
@@ -1454,10 +1461,10 @@ dhcp-users@lists.isc.org.
   write() call at just the same time as the other server killed the
   connection and caused an uncaught SIGPIPE signal which caused the
   OS to kill the server.
-  This is a minor security issue.  It is a security issue as it can 
+  This is a minor security issue.  It is a security issue as it can
   cause a server to stop.  It is minor as the attacker would need to
-  be able to interrupt traffic between the partners in a failover 
-  pair for max-response-delay seconds at will - in which case the 
+  be able to interrupt traffic between the partners in a failover
+  pair for max-response-delay seconds at will - in which case the
   defender has bigger problems than the DHCP server being killed.
   Using the NIST CVSS security vulnerability rating system this
   issue scored 1.2, meaning it is not a major risk for users.
@@ -1772,7 +1779,7 @@ dhcp-users@lists.isc.org.
   This is useful if you want not only to release a lease, but also make
   it available for reuse right away.  Hat tip to Christof Chen.
 
-- Fixed definition of the iaaddr hash functions to use the correct 
+- Fixed definition of the iaaddr hash functions to use the correct
   functions when referencing and dereferencing memory.
 
 - Some definitions not in phase with the IANA registry were updated.
@@ -1855,7 +1862,7 @@ dhcp-users@lists.isc.org.
 - When server is configured with options that it overrides, a warning is
   issued when the configuration file is read, rather than at the time the
   option is overridden. This was important, because the warning was given
-  every time the option was overridden, which could create a lot of 
+  every time the option was overridden, which could create a lot of
   unnecessary logging.
 
 - Fixed a compilation problems on platforms that define a value for FDDI,
@@ -1871,7 +1878,7 @@ dhcp-users@lists.isc.org.
 - Fix startup error messages to report a missing "subnet6 declaration", rather
   than a missing "subnet declaration", when running as a DHCPv6 server.
 
-- DHCPv6 client timestamp in DUID was based on the year 1970 rather 
+- DHCPv6 client timestamp in DUID was based on the year 1970 rather
   than the year 2000.
 
 - Warn when attempting to use a hardware parameter in DHCPv6.
@@ -1889,12 +1896,12 @@ dhcp-users@lists.isc.org.
 - dhc6_lease_destroy() and dhc6_ia_destroy() now set lease and IA pointers
   to NULL after freeing, to prevent subsequent accesses to freed memory.
 
-- The DHCPv6 server would not send the preference option unless the 
+- The DHCPv6 server would not send the preference option unless the
   client requested it, via the ORO. This has been fixed, so the DHCPv6
   server will always send the preference value if it is configured.
 
-- When addresses were passed as hints to the server in an IA, they were 
-  incorrectly handled, sometimes being treated as an error. Now the 
+- When addresses were passed as hints to the server in an IA, they were
+  incorrectly handled, sometimes being treated as an error. Now the
   server will treat these as hints and ignore them if it cannot supply
   a requested address.
 
@@ -1932,8 +1939,8 @@ dhcp-users@lists.isc.org.
   to put dhcpd.leases and dhclient.leases in /usr/local/var/db, which no
   one ever has.
 
-- Regression fix for bug where server advertised a IPv6 address in 
-  response to a SOLICIT but would not return the address in response 
+- Regression fix for bug where server advertised a IPv6 address in
+  response to a SOLICIT but would not return the address in response
   to a REQUEST.
 
 - A bug was fixed where the DHCPv6 server puts the NoAddrsAvail status
@@ -1965,7 +1972,7 @@ dhcp-users@lists.isc.org.
 
 - Eliminated a spurious error message from the client
 
-- A number of bugs with the internal handling of lease state on the 
+- A number of bugs with the internal handling of lease state on the
   server have been fixed. Some of these could cause server crashes.
 
 - The peer_wants_leases() changes pulled up from 3.1.0 were corrected,
@@ -1980,13 +1987,13 @@ dhcp-users@lists.isc.org.
 
 			Changes since 4.0.0a3
 
-- The DHCP server no longer requires a "ddns-update-style" statement, 
+- The DHCP server no longer requires a "ddns-update-style" statement,
   and now defaults to "none", which means DNS updates are disabled.
 
 - Log messages when failover peer names mismatch have been improved to
   point out the problem.
 
-- Bug where server advertised a IPv6 address in response to a SOLICIT 
+- Bug where server advertised a IPv6 address in response to a SOLICIT
   but would not return the address in response to a REQUEST. Thanks to
   Dennis Kou for finding the bug.
 
@@ -1999,7 +2006,7 @@ dhcp-users@lists.isc.org.
 
 - Compilation with DLPI and -Werror has been repaired.
 
-- Error in decoding IA_NA option if multiple interfaces are present 
+- Error in decoding IA_NA option if multiple interfaces are present
   fixed by Marcus Goller.
 
 - DHCPv6 server Confirm message processing has been enhanced - it no
@@ -2025,7 +2032,7 @@ dhcp-users@lists.isc.org.
 - Fixed file descriptor leak on listen failure. Thanks to Tom Clark.
 
 - Bug in server configuration parser caused server to get stuck on
-  startup for certain bad pool declarations. Thanks to Guillaume 
+  startup for certain bad pool declarations. Thanks to Guillaume
   Knispel for the bug report and fix.
 
 - Code cleaned to remove warnings reported by "gcc -Wall".
@@ -2041,8 +2048,8 @@ dhcp-users@lists.isc.org.
   the DHCPv6 client configuration.  'send dhcp6.oro' is no longer
   necessary.
 
-- Bug fixed where configuration file parsing did not work with 
-  zero-length options; this made it impossible to set the 
+- Bug fixed where configuration file parsing did not work with
+  zero-length options; this made it impossible to set the
   rapid-commit option.
 
 - Bogus messages about host records with IPv4 fixed-addresses being of
@@ -3426,7 +3433,7 @@ dhcp-users@lists.isc.org.
   had been done for a client with no name, even though no update had
   been done, and then when the client's lease expired the deletion of
   that nonexistant record would time out because the name was the null
-  string. 
+  string.
 
 - Clean up the omshell, dhcpctl and omapi man pages a bit.
 
@@ -3949,7 +3956,6 @@ dhcp-users@lists.isc.org.
 
 - When we get a bogus state lease binding state transition, don't do
   the transition.
-  
 
 	        Changes since 3.0 Beta 2 Patchlevel 12
 
