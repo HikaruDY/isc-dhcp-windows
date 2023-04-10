@@ -1,5 +1,9 @@
 # Generated
-Release
+*.exe
+*.dll
+*.o
+*.a
+*.Po
 *.obj
 *.exp
 *.pdb
@@ -16,7 +20,6 @@ Release
 *.tlog
 
 # OS related extra files
-Git.cmd
 Thumbs.db
 .DS_Store
 
