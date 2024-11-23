@@ -1,6 +1,7 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -DLOCALSTATEDIR='"@localstatedir@"'
+AM_CPPFLAGS += -I$(srcdir)/../includes -I$(srcdir)/../bind/include
 
 sbin_PROGRAMS = dhcrelay
 dhcrelay_SOURCES = dhcrelay.c

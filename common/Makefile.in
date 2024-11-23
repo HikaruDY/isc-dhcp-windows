@@ -382,7 +382,8 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CPPFLAGS = -I$(top_srcdir) -DLOCALSTATEDIR='"@localstatedir@"'
+AM_CPPFLAGS = -DLOCALSTATEDIR='"@localstatedir@"' -I$(srcdir)/.. \
+	-I$(srcdir)/../includes -I$(srcdir)/../bind/include
 AM_CFLAGS = $(LDAP_CFLAGS)
 lib_LIBRARIES = libdhcp.a
 libdhcp_a_SOURCES = alloc.c bpf.c comapi.c conflex.c ctrace.c dhcp4o6.c \

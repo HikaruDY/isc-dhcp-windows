@@ -395,7 +395,8 @@ top_srcdir = @top_srcdir@
 # directory. That eliminates any discrepancies between tested code and
 # production code. Sadly, we are not there yet.
 SUBDIRS = . tests
-AM_CPPFLAGS = -I.. -DLOCALSTATEDIR='"@localstatedir@"'
+AM_CPPFLAGS = -DLOCALSTATEDIR='"@localstatedir@"' -I$(srcdir)/.. \
+	-I$(srcdir)/../includes -I$(srcdir)/../bind/include
 dist_sysconf_DATA = dhcpd.conf.example
 dhcpd_SOURCES = dhcpd.c dhcp.c bootp.c confpars.c db.c class.c failover.c \
 		omapi.c mdb.c stables.c salloc.c ddns.c dhcpleasequery.c \

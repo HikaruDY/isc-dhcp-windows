@@ -6,6 +6,7 @@ SUBDIRS = . tests
 
 AM_CPPFLAGS = -DCLIENT_PATH='"PATH=$(sbindir):/sbin:/bin:/usr/sbin:/usr/bin"'
 AM_CPPFLAGS += -DLOCALSTATEDIR='"$(localstatedir)"'
+AM_CPPFLAGS += -I$(srcdir)/../includes -I$(srcdir)/../bind/include
 
 dist_sysconf_DATA = dhclient.conf.example
 sbin_PROGRAMS = dhclient

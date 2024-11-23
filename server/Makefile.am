@@ -4,7 +4,8 @@
 # production code. Sadly, we are not there yet.
 SUBDIRS = . tests
 
-AM_CPPFLAGS = -I.. -DLOCALSTATEDIR='"@localstatedir@"'
+AM_CPPFLAGS = -DLOCALSTATEDIR='"@localstatedir@"'
+AM_CPPFLAGS += -I$(srcdir)/.. -I$(srcdir)/../includes -I$(srcdir)/../bind/include 
 
 dist_sysconf_DATA = dhcpd.conf.example
 sbin_PROGRAMS = dhcpd
@@ -22,4 +23,3 @@ dhcpd_LDADD = ../common/libdhcp.@A@ ../omapip/libomapi.@A@ \
 
 man_MANS = dhcpd.8 dhcpd.conf.5 dhcpd.leases.5
 EXTRA_DIST = $(man_MANS)
-
