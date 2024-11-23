@@ -174,7 +174,11 @@ if_register_socket(struct interface_info *info, int family,
 		addr->sin_family = AF_INET;
 		addr->sin_port = local_port;
 		memcpy(&addr->sin_addr,
+#if !defined(DHCP_WINDOWS) //***
 		       &local_address,
+#else
+			&info->addresses[0],
+#endif //DHCP_WINDOWS
 		       sizeof(addr->sin_addr));
 #ifdef HAVE_SA_LEN
 		addr->sin_len = sizeof(*addr);
