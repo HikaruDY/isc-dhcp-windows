@@ -3,7 +3,7 @@ AC_INIT([DHCP],[4.4.3-P1],[dhcp-users@isc.org])
 
 # we specify "foreign" to avoid having to have the GNU mandated files,
 # like AUTHORS, COPYING, and such
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 
 # we specify AM_MAINTAINER_MODE to avoid problems with rebuilding
 # the configure and makefiles.  Without it users doing things that
@@ -913,16 +913,14 @@ AC_ARG_WITH(ldapcrypto,
 
 # Gssapi to allow LDAP to authenticate with a keytab
 AC_ARG_WITH(ldap-gssapi,
-    AC_HELP_STRING([--with-ldap-gssapi],
-                   [enable krb5/gssapi authentication for OpenLDAP in dhcpd (default is no)]),
+    AS_HELP_STRING([--with-ldap-gssapi],[enable krb5/gssapi authentication for OpenLDAP in dhcpd (default is no)]),
     [ldap_gssapi=$withval],
     [ldap_gssapi=no])
 
 
 # LDAP CASA auth support.
 AC_ARG_WITH(ldapcasa,
-    AC_HELP_STRING([--with-ldapcasa],
-                   [enable LDAP CASA auth support in dhcpd (default is no)]),
+    AS_HELP_STRING([--with-ldapcasa],[enable LDAP CASA auth support in dhcpd (default is no)]),
     [ldapcasa=$withval],
     [ldapcasa=no])
 

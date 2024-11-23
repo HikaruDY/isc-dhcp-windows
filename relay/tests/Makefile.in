@@ -102,7 +102,8 @@ CONFIG_CLEAN_VPATH_FILES =
 @HAVE_ATF_TRUE@am__EXEEXT_1 = relay_unittests$(EXEEXT)
 am__EXEEXT_2 = $(am__EXEEXT_1)
 am__relay_unittests_SOURCES_DIST = ../dhcrelay.c relay_unittests.c
-am__objects_1 = dhcrelay.$(OBJEXT)
+am__dirstamp = $(am__leading_dot)dirstamp
+am__objects_1 = ../dhcrelay.$(OBJEXT)
 @HAVE_ATF_TRUE@am_relay_unittests_OBJECTS = $(am__objects_1) \
 @HAVE_ATF_TRUE@	relay_unittests.$(OBJEXT)
 relay_unittests_OBJECTS = $(am_relay_unittests_OBJECTS)
@@ -126,13 +127,9 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/includes
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/dhcrelay.Po \
+am__depfiles_remade = ../$(DEPDIR)/dhcrelay.Po \
 	./$(DEPDIR)/relay_unittests.Po
 am__mv = mv -f
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
-am__v_lt_1 = 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 AM_V_CC = $(am__v_CC_@AM_V@)
@@ -388,6 +385,13 @@ $(am__aclocal_m4_deps):
 
 clean-checkPROGRAMS:
 	-test -z "$(check_PROGRAMS)" || rm -f $(check_PROGRAMS)
+../$(am__dirstamp):
+	@$(MKDIR_P) ..
+	@: > ../$(am__dirstamp)
+../$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ../$(DEPDIR)
+	@: > ../$(DEPDIR)/$(am__dirstamp)
+../dhcrelay.$(OBJEXT): ../$(am__dirstamp) ../$(DEPDIR)/$(am__dirstamp)
 
 relay_unittests$(EXEEXT): $(relay_unittests_OBJECTS) $(relay_unittests_DEPENDENCIES) $(EXTRA_relay_unittests_DEPENDENCIES) 
 	@rm -f relay_unittests$(EXEEXT)
@@ -395,11 +399,12 @@ relay_unittests$(EXEEXT): $(relay_unittests_OBJECTS) $(relay_unittests_DEPENDENC
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ../*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dhcrelay.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@../$(DEPDIR)/dhcrelay.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/relay_unittests.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
@@ -409,32 +414,20 @@ $(am__depfiles_remade):
 am--depfiles: $(am__depfiles_remade)
 
 .c.o:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-
-dhcrelay.o: ../dhcrelay.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dhcrelay.o -MD -MP -MF $(DEPDIR)/dhcrelay.Tpo -c -o dhcrelay.o `test -f '../dhcrelay.c' || echo '$(srcdir)/'`../dhcrelay.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dhcrelay.Tpo $(DEPDIR)/dhcrelay.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='../dhcrelay.c' object='dhcrelay.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dhcrelay.o `test -f '../dhcrelay.c' || echo '$(srcdir)/'`../dhcrelay.c
-
-dhcrelay.obj: ../dhcrelay.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dhcrelay.obj -MD -MP -MF $(DEPDIR)/dhcrelay.Tpo -c -o dhcrelay.obj `if test -f '../dhcrelay.c'; then $(CYGPATH_W) '../dhcrelay.c'; else $(CYGPATH_W) '$(srcdir)/../dhcrelay.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dhcrelay.Tpo $(DEPDIR)/dhcrelay.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='../dhcrelay.c' object='dhcrelay.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dhcrelay.obj `if test -f '../dhcrelay.c'; then $(CYGPATH_W) '../dhcrelay.c'; else $(CYGPATH_W) '$(srcdir)/../dhcrelay.c'; fi`
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run 'make' without going through this Makefile.
@@ -624,6 +617,8 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f ../$(DEPDIR)/$(am__dirstamp)
+	-rm -f ../$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -634,7 +629,7 @@ clean: clean-recursive
 clean-am: clean-checkPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-recursive
-		-rm -f ./$(DEPDIR)/dhcrelay.Po
+		-rm -f ../$(DEPDIR)/dhcrelay.Po
 	-rm -f ./$(DEPDIR)/relay_unittests.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
@@ -679,7 +674,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-recursive
-		-rm -f ./$(DEPDIR)/dhcrelay.Po
+		-rm -f ../$(DEPDIR)/dhcrelay.Po
 	-rm -f ./$(DEPDIR)/relay_unittests.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
