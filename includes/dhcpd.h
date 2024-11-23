@@ -30,6 +30,10 @@
 
 #include "config.h"
 
+#if defined(DHCP_WINDOWS)
+#include <WindowsSupport.h>
+#endif //DHCP_WINDOWS
+
 #ifndef __CYGWIN32__
 #include <sys/types.h>
 #include <netinet/in.h>

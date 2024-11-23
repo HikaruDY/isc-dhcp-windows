@@ -460,7 +460,7 @@ next_iface(struct iface_info *info, int *err, struct iface_conf_list *ifaces) {
 	 */
 	if (ifaces->next->ifa_addr != NULL) {
 /* Linux lacks the sa_len member in struct sockaddr. */
-#if defined(__linux)
+#if defined(__linux) || defined(DHCP_WINDOWS) //***
 		if (ifaces->next->ifa_addr->sa_family == AF_INET)
 			sa_len = sizeof(struct sockaddr_in);
 		else if (ifaces->next->ifa_addr->sa_family == AF_INET6)
@@ -591,6 +591,10 @@ discover_interfaces(int state) {
 #endif
 
 	static int setup_fallback = 0;
+
+#if defined(DHCP_WINDOWS)
+	setup_fallback = 1; //*** Avoid bug that crash on Windows (provisional)
+#endif
 
 	if (!begin_iface_scan(&ifaces)) {
 		log_fatal("Can't get list of interfaces.");
