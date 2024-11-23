@@ -6967,7 +6967,7 @@ fi
 
 
 # Append selected warning levels to CFLAGS before substitution (but after
-# AC_TRY_COMPILE & etc).
+# AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[]) & etc).
 CFLAGS="$CFLAGS $STD_CWARNINGS"
 
 case "$host" in
