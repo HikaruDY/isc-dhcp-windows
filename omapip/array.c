@@ -3,12 +3,12 @@
    Subroutines that support the omapi extensible array type. */
 
 /*
- * Copyright (c) 2004-2007,2009,2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2001-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -19,8 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -40,7 +40,7 @@ isc_result_t omapi_array_allocate (omapi_array_t **array,
 	omapi_array_t *aptr;
 
 	if (!array || *array)
-		return ISC_R_INVALIDARG;
+		return DHCP_R_INVALIDARG;
 	aptr = dmalloc (sizeof (omapi_array_t),file, line);
 	if (!aptr)
 		return ISC_R_NOMEMORY;
@@ -57,7 +57,7 @@ isc_result_t omapi_array_free (omapi_array_t **array,
 	int i;
 
 	if (!array || !*array)
-		return ISC_R_INVALIDARG;
+		return DHCP_R_INVALIDARG;
 	aptr = *array;
 	for (i = 0; i < aptr -> count; i++)
 		if (aptr -> data [i] && aptr -> deref)
@@ -92,11 +92,11 @@ isc_result_t omapi_array_set (omapi_array_t *array, void *ptr, int index,
 	isc_result_t status;
 
 	if (!array)
-		return ISC_R_INVALIDARG;
+		return DHCP_R_INVALIDARG;
 	if (!ptr)
-		return ISC_R_INVALIDARG;
+		return DHCP_R_INVALIDARG;
 	if (index < 0)
-		return ISC_R_INVALIDARG;
+		return DHCP_R_INVALIDARG;
 
 	/* If the proposed index is larger than the current available
 	   space in the array, make more space in the array. */
@@ -122,7 +122,7 @@ isc_result_t omapi_array_set (omapi_array_t *array, void *ptr, int index,
 		if (array -> data [index]) {
 			status = ((*array -> deref) (&array -> data [index],
 						     file, line));
-		
+
 			if (status != ISC_R_SUCCESS)
 				return status;
 		}
@@ -147,10 +147,9 @@ isc_result_t omapi_array_lookup (char **ptr, omapi_array_t *array, int index,
 				 const char *file, int line)
 {
 	if (!array || !ptr || *ptr || index < 0 || index >= array -> count)
-		return ISC_R_INVALIDARG;
+		return DHCP_R_INVALIDARG;
 	if (array -> data [index])
 		return (*array -> ref) (ptr,
 					array -> data [index], file, line);
 	return ISC_R_NOTFOUND;
 }
-

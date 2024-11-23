@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1983, 1989, 1993
  *    The Regents of the University of California.  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -13,7 +13,7 @@
  * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,7 +28,7 @@
  */
 
 /*
- * Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -44,14 +44,14 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  */
 
 /*
- *	$Id: nameser.h,v 1.5.786.2 2009/07/24 22:04:52 sar Exp $
+ *	$Id: nameser.h,v 1.7 2009/11/24 02:06:56 sar Exp $
  */
 
 #ifndef _ARPA_NAMESER_H_
@@ -211,35 +211,7 @@ typedef enum __ns_update_operation {
 	ns_uop_max = 2
 } ns_update_operation;
 
-/*
- * This structure is used for TSIG authenticated messages
- */
-struct ns_tsig_key {
-        char name[NS_MAXDNAME], alg[NS_MAXDNAME];
-        unsigned char *data;
-        unsigned len;
-};
-typedef struct ns_tsig_key ns_tsig_key;
-
-/*
- * This structure is used for TSIG authenticated TCP messages
- */
-struct ns_tcp_tsig_state {
-	int counter;
-	struct dst_key *key;
-	void *ctx;
-	unsigned char sig[NS_PACKETSZ];
-	unsigned siglen;
-};
-typedef struct ns_tcp_tsig_state ns_tcp_tsig_state;
-
-#define NS_TSIG_FUDGE 300
-#define NS_TSIG_TCP_COUNT 100
 #define NS_TSIG_ALG_HMAC_MD5 "HMAC-MD5.SIG-ALG.REG.INT"
-
-#define NS_TSIG_ERROR_NO_TSIG -10
-#define NS_TSIG_ERROR_NO_SPACE -11
-#define NS_TSIG_ERROR_FORMERR -12
 
 /*
  * Currently defined type values for resources and queries.

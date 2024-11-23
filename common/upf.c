@@ -3,12 +3,12 @@
    Ultrix PacketFilter interface code. */
 
 /*
- * Copyright (c) 2004,2007,2009,2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -19,8 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -94,7 +94,7 @@ int if_register_upf (info)
 		       info -> name);
 
 	/* We only know how to do ethernet. */
-	if (param.end_dev_type != ENDT_10MB)	
+	if (param.end_dev_type != ENDT_10MB)
 		log_fatal ("Invalid device type on network interface %s: %d",
 		       info -> name, param.end_dev_type);
 
@@ -156,6 +156,9 @@ void if_deregister_send (info)
    XXX Changes to the filter program may require changes to the constant
    offsets used in if_register_send to patch the UPF program! XXX */
 
+#if defined(RELAY_PORT)
+#error "Relay port is not yet supported for UPF"
+#endif
 
 void if_register_receive (info)
 	struct interface_info *info;
@@ -253,6 +256,9 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	if (!strcmp (interface -> name, "fallback"))
 		return send_fallback (interface, packet, raw,
 				      len, from, to, hto);
+
+	if (hto == NULL && interface->anycast_mac_addr.hlen)
+		hto = &interface->anycast_mac_addr;
 
 	/* Assemble the headers... */
 	assemble_hw_header (interface, (unsigned char *)hw, &hbufp, hto);

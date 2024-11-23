@@ -87,7 +87,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@HAVE_ATF_TRUE@am__append_1 = alloc_unittest ns_name_unittest option_unittest
+@HAVE_ATF_TRUE@am__append_1 = alloc_unittest dns_unittest misc_unittest ns_name_unittest \
+@HAVE_ATF_TRUE@	option_unittest domain_name_unittest
+
 check_PROGRAMS = $(am__EXEEXT_2)
 subdir = common/tests
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -100,8 +102,10 @@ CONFIG_HEADER = $(top_builddir)/includes/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 @HAVE_ATF_TRUE@am__EXEEXT_1 = alloc_unittest$(EXEEXT) \
+@HAVE_ATF_TRUE@	dns_unittest$(EXEEXT) misc_unittest$(EXEEXT) \
 @HAVE_ATF_TRUE@	ns_name_unittest$(EXEEXT) \
-@HAVE_ATF_TRUE@	option_unittest$(EXEEXT)
+@HAVE_ATF_TRUE@	option_unittest$(EXEEXT) \
+@HAVE_ATF_TRUE@	domain_name_unittest$(EXEEXT)
 am__EXEEXT_2 = $(am__EXEEXT_1)
 am__alloc_unittest_SOURCES_DIST = test_alloc.c \
 	$(top_srcdir)/tests/t_api_dhcp.c
@@ -110,24 +114,43 @@ am__alloc_unittest_SOURCES_DIST = test_alloc.c \
 alloc_unittest_OBJECTS = $(am_alloc_unittest_OBJECTS)
 am__DEPENDENCIES_1 =
 @HAVE_ATF_TRUE@alloc_unittest_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@HAVE_ATF_TRUE@	../libdhcp.a ../../omapip/libomapi.a \
-@HAVE_ATF_TRUE@	../../dst/libdst.a ../../minires/libres.a
+@HAVE_ATF_TRUE@	../libdhcp.@A@ ../../omapip/libomapi.@A@
+am__dns_unittest_SOURCES_DIST = dns_unittest.c \
+	$(top_srcdir)/tests/t_api_dhcp.c
+@HAVE_ATF_TRUE@am_dns_unittest_OBJECTS = dns_unittest.$(OBJEXT) \
+@HAVE_ATF_TRUE@	t_api_dhcp.$(OBJEXT)
+dns_unittest_OBJECTS = $(am_dns_unittest_OBJECTS)
+@HAVE_ATF_TRUE@dns_unittest_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+@HAVE_ATF_TRUE@	../libdhcp.@A@ ../../omapip/libomapi.@A@
+am__domain_name_unittest_SOURCES_DIST = domain_name_test.c \
+	$(top_srcdir)/tests/t_api_dhcp.c
+@HAVE_ATF_TRUE@am_domain_name_unittest_OBJECTS =  \
+@HAVE_ATF_TRUE@	domain_name_test.$(OBJEXT) t_api_dhcp.$(OBJEXT)
+domain_name_unittest_OBJECTS = $(am_domain_name_unittest_OBJECTS)
+@HAVE_ATF_TRUE@domain_name_unittest_DEPENDENCIES =  \
+@HAVE_ATF_TRUE@	$(am__DEPENDENCIES_1) ../libdhcp.@A@ \
+@HAVE_ATF_TRUE@	../../omapip/libomapi.@A@
+am__misc_unittest_SOURCES_DIST = misc_unittest.c \
+	$(top_srcdir)/tests/t_api_dhcp.c
+@HAVE_ATF_TRUE@am_misc_unittest_OBJECTS = misc_unittest.$(OBJEXT) \
+@HAVE_ATF_TRUE@	t_api_dhcp.$(OBJEXT)
+misc_unittest_OBJECTS = $(am_misc_unittest_OBJECTS)
+@HAVE_ATF_TRUE@misc_unittest_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+@HAVE_ATF_TRUE@	../libdhcp.@A@ ../../omapip/libomapi.@A@
 am__ns_name_unittest_SOURCES_DIST = ns_name_test.c \
 	$(top_srcdir)/tests/t_api_dhcp.c
 @HAVE_ATF_TRUE@am_ns_name_unittest_OBJECTS = ns_name_test.$(OBJEXT) \
 @HAVE_ATF_TRUE@	t_api_dhcp.$(OBJEXT)
 ns_name_unittest_OBJECTS = $(am_ns_name_unittest_OBJECTS)
 @HAVE_ATF_TRUE@ns_name_unittest_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@HAVE_ATF_TRUE@	../libdhcp.a ../../omapip/libomapi.a \
-@HAVE_ATF_TRUE@	../../dst/libdst.a ../../minires/libres.a
+@HAVE_ATF_TRUE@	../libdhcp.@A@ ../../omapip/libomapi.@A@
 am__option_unittest_SOURCES_DIST = option_unittest.c \
 	$(top_srcdir)/tests/t_api_dhcp.c
 @HAVE_ATF_TRUE@am_option_unittest_OBJECTS = option_unittest.$(OBJEXT) \
 @HAVE_ATF_TRUE@	t_api_dhcp.$(OBJEXT)
 option_unittest_OBJECTS = $(am_option_unittest_OBJECTS)
 @HAVE_ATF_TRUE@option_unittest_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@HAVE_ATF_TRUE@	../libdhcp.a ../../omapip/libomapi.a \
-@HAVE_ATF_TRUE@	../../dst/libdst.a ../../minires/libres.a
+@HAVE_ATF_TRUE@	../libdhcp.@A@ ../../omapip/libomapi.@A@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -143,9 +166,10 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/includes
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/ns_name_test.Po \
-	./$(DEPDIR)/option_unittest.Po ./$(DEPDIR)/t_api_dhcp.Po \
-	./$(DEPDIR)/test_alloc.Po
+am__depfiles_remade = ./$(DEPDIR)/dns_unittest.Po \
+	./$(DEPDIR)/domain_name_test.Po ./$(DEPDIR)/misc_unittest.Po \
+	./$(DEPDIR)/ns_name_test.Po ./$(DEPDIR)/option_unittest.Po \
+	./$(DEPDIR)/t_api_dhcp.Po ./$(DEPDIR)/test_alloc.Po
 am__mv = mv -f
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -163,9 +187,13 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(alloc_unittest_SOURCES) $(ns_name_unittest_SOURCES) \
-	$(option_unittest_SOURCES)
+SOURCES = $(alloc_unittest_SOURCES) $(dns_unittest_SOURCES) \
+	$(domain_name_unittest_SOURCES) $(misc_unittest_SOURCES) \
+	$(ns_name_unittest_SOURCES) $(option_unittest_SOURCES)
 DIST_SOURCES = $(am__alloc_unittest_SOURCES_DIST) \
+	$(am__dns_unittest_SOURCES_DIST) \
+	$(am__domain_name_unittest_SOURCES_DIST) \
+	$(am__misc_unittest_SOURCES_DIST) \
 	$(am__ns_name_unittest_SOURCES_DIST) \
 	$(am__option_unittest_SOURCES_DIST)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
@@ -234,9 +262,11 @@ am__relativize = \
     dir1=`echo "$$dir1" | sed -e "$$sed_rest"`; \
   done; \
   reldir="$$dir2"
+A = @A@
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+AR = @AR@
 ATF_BIN = @ATF_BIN@
 ATF_CFLAGS = @ATF_CFLAGS@
 ATF_LDFLAGS = @ATF_LDFLAGS@
@@ -244,6 +274,16 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BINDCONFIG = @BINDCONFIG@
+BINDDIR = @BINDDIR@
+BINDIOMUX = @BINDIOMUX@
+BINDLIBDNSDIR = @BINDLIBDNSDIR@
+BINDLIBIRSDIR = @BINDLIBIRSDIR@
+BINDLIBISCCFGDIR = @BINDLIBISCCFGDIR@
+BINDLIBISCDIR = @BINDLIBISCDIR@
+BINDLT = @BINDLT@
+BINDSRCDIR = @BINDSRCDIR@
+BINDSUBDIR = @BINDSUBDIR@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -253,6 +293,10 @@ CTAGS = @CTAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DHLIBS = @DHLIBS@
+DISTCHECK_ATF_CONFIGURE_FLAG = @DISTCHECK_ATF_CONFIGURE_FLAG@
+DISTCHECK_LIBBIND_CONFIGURE_FLAG = @DISTCHECK_LIBBIND_CONFIGURE_FLAG@
+DISTCHECK_LIBTOOL_CONFIGURE_FLAG = @DISTCHECK_LIBTOOL_CONFIGURE_FLAG@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -263,6 +307,8 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+LDAP_CFLAGS = @LDAP_CFLAGS@
+LDAP_LIBS = @LDAP_LIBS@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -279,10 +325,12 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+Q = @Q@
 RANLIB = @RANLIB@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+UNITTESTS = @UNITTESTS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -340,20 +388,52 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = .
 AM_CPPFLAGS = $(ATF_CFLAGS) -I$(top_srcdir)/includes
-EXTRA_DIST = Atffile
+EXTRA_DIST = Atffile Kyuafile
 ATF_TESTS = $(am__append_1)
 @HAVE_ATF_TRUE@alloc_unittest_SOURCES = test_alloc.c $(top_srcdir)/tests/t_api_dhcp.c
-@HAVE_ATF_TRUE@alloc_unittest_LDADD = $(ATF_LDFLAGS) ../libdhcp.a \
-@HAVE_ATF_TRUE@	../../omapip/libomapi.a ../../dst/libdst.a \
-@HAVE_ATF_TRUE@	../../minires/libres.a
+@HAVE_ATF_TRUE@alloc_unittest_LDADD = $(ATF_LDFLAGS) ../libdhcp.@A@ \
+@HAVE_ATF_TRUE@	../../omapip/libomapi.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBIRSDIR@/libirs.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBDNSDIR@/libdns.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBISCCFGDIR@/libisccfg.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBISCDIR@/libisc.@A@
+@HAVE_ATF_TRUE@dns_unittest_SOURCES = dns_unittest.c $(top_srcdir)/tests/t_api_dhcp.c
+@HAVE_ATF_TRUE@dns_unittest_LDADD = $(ATF_LDFLAGS) ../libdhcp.@A@ \
+@HAVE_ATF_TRUE@	../../omapip/libomapi.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBIRSDIR@/libirs.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBDNSDIR@/libdns.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBISCCFGDIR@/libisccfg.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBISCDIR@/libisc.@A@
+@HAVE_ATF_TRUE@misc_unittest_SOURCES = misc_unittest.c $(top_srcdir)/tests/t_api_dhcp.c
+@HAVE_ATF_TRUE@misc_unittest_LDADD = $(ATF_LDFLAGS) ../libdhcp.@A@ \
+@HAVE_ATF_TRUE@	../../omapip/libomapi.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBIRSDIR@/libirs.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBDNSDIR@/libdns.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBISCCFGDIR@/libisccfg.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBISCDIR@/libisc.@A@
 @HAVE_ATF_TRUE@ns_name_unittest_SOURCES = ns_name_test.c $(top_srcdir)/tests/t_api_dhcp.c
-@HAVE_ATF_TRUE@ns_name_unittest_LDADD = $(ATF_LDFLAGS) ../libdhcp.a \
-@HAVE_ATF_TRUE@	../../omapip/libomapi.a ../../dst/libdst.a \
-@HAVE_ATF_TRUE@	../../minires/libres.a
+@HAVE_ATF_TRUE@ns_name_unittest_LDADD = $(ATF_LDFLAGS) ../libdhcp.@A@ \
+@HAVE_ATF_TRUE@	../../omapip/libomapi.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBIRSDIR@/libirs.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBDNSDIR@/libdns.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBISCCFGDIR@/libisccfg.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBISCDIR@/libisc.@A@
 @HAVE_ATF_TRUE@option_unittest_SOURCES = option_unittest.c $(top_srcdir)/tests/t_api_dhcp.c
-@HAVE_ATF_TRUE@option_unittest_LDADD = $(ATF_LDFLAGS) ../libdhcp.a \
-@HAVE_ATF_TRUE@	../../omapip/libomapi.a ../../dst/libdst.a \
-@HAVE_ATF_TRUE@	../../minires/libres.a
+@HAVE_ATF_TRUE@option_unittest_LDADD = $(ATF_LDFLAGS) ../libdhcp.@A@ \
+@HAVE_ATF_TRUE@	../../omapip/libomapi.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBIRSDIR@/libirs.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBDNSDIR@/libdns.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBISCCFGDIR@/libisccfg.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBISCDIR@/libisc.@A@
+@HAVE_ATF_TRUE@domain_name_unittest_SOURCES = domain_name_test.c \
+@HAVE_ATF_TRUE@	$(top_srcdir)/tests/t_api_dhcp.c
+
+@HAVE_ATF_TRUE@domain_name_unittest_LDADD = $(ATF_LDFLAGS) \
+@HAVE_ATF_TRUE@	../libdhcp.@A@ ../../omapip/libomapi.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBIRSDIR@/libirs.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBDNSDIR@/libdns.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBISCCFGDIR@/libisccfg.@A@ \
+@HAVE_ATF_TRUE@	@BINDLIBISCDIR@/libisc.@A@
 all: all-recursive
 
 .SUFFIXES:
@@ -395,6 +475,18 @@ alloc_unittest$(EXEEXT): $(alloc_unittest_OBJECTS) $(alloc_unittest_DEPENDENCIES
 	@rm -f alloc_unittest$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(alloc_unittest_OBJECTS) $(alloc_unittest_LDADD) $(LIBS)
 
+dns_unittest$(EXEEXT): $(dns_unittest_OBJECTS) $(dns_unittest_DEPENDENCIES) $(EXTRA_dns_unittest_DEPENDENCIES) 
+	@rm -f dns_unittest$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(dns_unittest_OBJECTS) $(dns_unittest_LDADD) $(LIBS)
+
+domain_name_unittest$(EXEEXT): $(domain_name_unittest_OBJECTS) $(domain_name_unittest_DEPENDENCIES) $(EXTRA_domain_name_unittest_DEPENDENCIES) 
+	@rm -f domain_name_unittest$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(domain_name_unittest_OBJECTS) $(domain_name_unittest_LDADD) $(LIBS)
+
+misc_unittest$(EXEEXT): $(misc_unittest_OBJECTS) $(misc_unittest_DEPENDENCIES) $(EXTRA_misc_unittest_DEPENDENCIES) 
+	@rm -f misc_unittest$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(misc_unittest_OBJECTS) $(misc_unittest_LDADD) $(LIBS)
+
 ns_name_unittest$(EXEEXT): $(ns_name_unittest_OBJECTS) $(ns_name_unittest_DEPENDENCIES) $(EXTRA_ns_name_unittest_DEPENDENCIES) 
 	@rm -f ns_name_unittest$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(ns_name_unittest_OBJECTS) $(ns_name_unittest_LDADD) $(LIBS)
@@ -409,6 +501,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dns_unittest.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/domain_name_test.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/misc_unittest.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ns_name_test.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/option_unittest.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/t_api_dhcp.Po@am__quote@ # am--include-marker
@@ -640,18 +735,22 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+@HAVE_ATF_FALSE@distclean-local:
 clean: clean-recursive
 
 clean-am: clean-checkPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-recursive
-		-rm -f ./$(DEPDIR)/ns_name_test.Po
+		-rm -f ./$(DEPDIR)/dns_unittest.Po
+	-rm -f ./$(DEPDIR)/domain_name_test.Po
+	-rm -f ./$(DEPDIR)/misc_unittest.Po
+	-rm -f ./$(DEPDIR)/ns_name_test.Po
 	-rm -f ./$(DEPDIR)/option_unittest.Po
 	-rm -f ./$(DEPDIR)/t_api_dhcp.Po
 	-rm -f ./$(DEPDIR)/test_alloc.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-tags
+	distclean-local distclean-tags
 
 dvi: dvi-recursive
 
@@ -694,7 +793,10 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-recursive
-		-rm -f ./$(DEPDIR)/ns_name_test.Po
+		-rm -f ./$(DEPDIR)/dns_unittest.Po
+	-rm -f ./$(DEPDIR)/domain_name_test.Po
+	-rm -f ./$(DEPDIR)/misc_unittest.Po
+	-rm -f ./$(DEPDIR)/ns_name_test.Po
 	-rm -f ./$(DEPDIR)/option_unittest.Po
 	-rm -f ./$(DEPDIR)/t_api_dhcp.Po
 	-rm -f ./$(DEPDIR)/test_alloc.Po
@@ -720,22 +822,31 @@ uninstall-am:
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am \
 	am--depfiles check check-am clean clean-checkPROGRAMS \
 	clean-generic cscopelist-am ctags ctags-am distclean \
-	distclean-compile distclean-generic distclean-tags distdir dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs installdirs-am \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
-	tags tags-am uninstall uninstall-am
+	distclean-compile distclean-generic distclean-local \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip installcheck installcheck-am installdirs \
+	installdirs-am maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
+	ps ps-am tags tags-am uninstall uninstall-am
 
 .PRECIOUS: Makefile
 
 
 @HAVE_ATF_TRUE@check: $(ATF_TESTS)
-@HAVE_ATF_TRUE@	sh ${top_srcdir}/tests/unittest.sh
+@HAVE_ATF_TRUE@	@if test $(top_srcdir) != ${top_builddir}; then \
+@HAVE_ATF_TRUE@		cp $(top_srcdir)/common/tests/Atffile Atffile; \
+@HAVE_ATF_TRUE@		cp $(top_srcdir)/common/tests/Kyuafile Kyuafile; \
+@HAVE_ATF_TRUE@	fi
+@HAVE_ATF_TRUE@	sh ${top_builddir}/tests/unittest.sh
+
+@HAVE_ATF_TRUE@distclean-local:
+@HAVE_ATF_TRUE@	@if test $(top_srcdir) != ${top_builddir}; then \
+@HAVE_ATF_TRUE@		rm -f Atffile Kyuafile; \
+@HAVE_ATF_TRUE@	fi
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

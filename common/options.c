@@ -3,12 +3,12 @@
    DHCP options parsing and reassembly. */
 
 /*
- * Copyright (c) 2004-2022 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -19,8 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -191,90 +191,97 @@ int parse_option_buffer (options, buffer, length, universe)
 			return 0;
 		}
 
+		/* If the option contains an encapsulation, parse it.  In
+		   any case keep the raw data as well.  (Previous to 4.4.0
+		   we only kept the raw data if the parse failed, the option
+		   wasn't an encapsulation (by far the most common case), or
+		   the option wasn't entirely an encapsulation
+		*/
+
+		if (option &&
+		    (option->format[0] == 'e' || option->format[0] == 'E')) {
+			(void) parse_encapsulated_suboptions(options, option,
+							     bp->data + offset,
+							     len,
+							     universe, NULL);
+		}
+
 		if (universe == &dhcp_universe && code == DHO_HOST_NAME &&
 		    len == 0) {
 			/* non-compliant clients can send it
-			* we'll just drop it and go on */
+			 * we'll just drop it and go on */
 			log_debug ("Ignoring empty DHO_HOST_NAME option");
 			option_dereference(&option, MDL);
+			offset += len;
+			continue;
 		}
 
-		/* If the option contains an encapsulation, parse it.   If
-		   the parse fails, or the option isn't an encapsulation (by
-		   far the most common case), or the option isn't entirely
-		   an encapsulation, keep the raw data as well. */
-		if (!(option &&
-		      (option->format[0] == 'e' ||
-		       option->format[0] == 'E') &&
-		      (parse_encapsulated_suboptions(options, option,
-						     bp->data + offset, len,
-						     universe, NULL)))) {
-			op = lookup_option(universe, options, code);
-
-			if (op != NULL && universe->concat_duplicates) {
-				struct data_string new;
-				memset(&new, 0, sizeof new);
-				if (!buffer_allocate(&new.buffer,
-						     op->data.len + len,
-						     MDL)) {
-					log_error("parse_option_buffer: "
-						  "No memory.");
-					buffer_dereference(&bp, MDL);
-					option_dereference(&option, MDL);
-					return 0;
-				}
-				/* Copy old option to new data object. */
-				memcpy(new.buffer->data, op->data.data,
-					op->data.len);
-				/* Concat new option behind old. */
-				memcpy(new.buffer->data + op->data.len,
-					bp->data + offset, len);
-				new.len = op->data.len + len;
-				new.data = new.buffer->data;
-				/* Save new concat'd object. */
-				data_string_forget(&op->data, MDL);
-				data_string_copy(&op->data, &new, MDL);
-				data_string_forget(&new, MDL);
-			} else if (op != NULL) {
-				/* We must append this statement onto the
-				 * end of the list.
-				 */
-				while (op->next != NULL)
-					op = op->next;
-
-				if (!option_cache_allocate(&nop, MDL)) {
-					log_error("parse_option_buffer: "
-						  "No memory.");
-					buffer_dereference(&bp, MDL);
-					option_dereference(&option, MDL);
-					return 0;
-				}
-
-				option_reference(&nop->option, op->option, MDL);
-
-				nop->data.buffer = NULL;
-				buffer_reference(&nop->data.buffer, bp, MDL);
-				nop->data.data = bp->data + offset;
-				nop->data.len = len;
-
-				option_cache_reference(&op->next, nop, MDL);
-				option_cache_dereference(&nop, MDL);
-			} else {
-				if (save_option_buffer(universe, options, bp,
-						       bp->data + offset, len,
-						       code, 1) == 0) {
-					log_error("parse_option_buffer: "
-						  "save_option_buffer failed");
-					buffer_dereference(&bp, MDL);
-					return 0;
-				}
+		op = lookup_option(universe, options, code);
+		if (op == NULL) {
+			/* If we don't have an option create one */
+			if (save_option_buffer(universe, options, bp,
+					       bp->data + offset, len,
+					       code, 1) == 0) {
+				log_error("parse_option_buffer: "
+					  "save_option_buffer failed");
+				buffer_dereference(&bp, MDL);
+				option_dereference(&option, MDL);
+				return (0);
 			}
+		} else if (universe->concat_duplicates) {
+			/* If we do have an option either concat with
+			   what is there ...*/
+			struct data_string new;
+			memset(&new, 0, sizeof new);
+			if (!buffer_allocate(&new.buffer, op->data.len + len,
+					     MDL)) {
+				log_error("parse_option_buffer: No memory.");
+				buffer_dereference(&bp, MDL);
+				option_dereference(&option, MDL);
+				return (0);
+			}
+			/* Copy old option to new data object. */
+			memcpy(new.buffer->data, op->data.data,
+			       op->data.len);
+			/* Concat new option behind old. */
+			memcpy(new.buffer->data + op->data.len,
+			       bp->data + offset, len);
+			new.len = op->data.len + len;
+			new.data = new.buffer->data;
+			/* Save new concat'd object. */
+			data_string_forget(&op->data, MDL);
+			data_string_copy(&op->data, &new, MDL);
+			data_string_forget(&new, MDL);
+		} else  {
+			/* ... or we must append this statement onto the
+			 * end of the list.
+			 */
+			while (op->next != NULL)
+				op = op->next;
+
+			if (!option_cache_allocate(&nop, MDL)) {
+				log_error("parse_option_buffer: No memory.");
+				buffer_dereference(&bp, MDL);
+				option_dereference(&option, MDL);
+				return (0);
+			}
+
+			option_reference(&nop->option, op->option, MDL);
+
+			nop->data.buffer = NULL;
+			buffer_reference(&nop->data.buffer, bp, MDL);
+			nop->data.data = bp->data + offset;
+			nop->data.len = len;
+
+			option_cache_reference(&op->next, nop, MDL);
+			option_cache_dereference(&nop, MDL);
 		}
+
 		option_dereference(&option, MDL);
 		offset += len;
 	}
 	buffer_dereference (&bp, MDL);
-	return 1;
+	return (1);
 }
 
 /* If an option in an option buffer turns out to be an encapsulation,
@@ -656,6 +663,8 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	priority_list[priority_len++] = DHO_DHCP_MESSAGE_TYPE;
 	priority_list[priority_len++] = DHO_DHCP_SERVER_IDENTIFIER;
 	priority_list[priority_len++] = DHO_DHCP_LEASE_TIME;
+	priority_list[priority_len++] = DHO_DHCP_RENEWAL_TIME;
+	priority_list[priority_len++] = DHO_DHCP_REBINDING_TIME;
 	priority_list[priority_len++] = DHO_DHCP_MESSAGE;
 	priority_list[priority_len++] = DHO_DHCP_REQUESTED_ADDRESS;
 	priority_list[priority_len++] = DHO_ASSOCIATED_IP;
@@ -668,8 +677,21 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 					DHO_SUBNET_SELECTION;
 		}
 
+		/* If echo-client-id is on, then we add client identifier to
+		 * the priority_list. This way we'll send it whether or not it
+		 * is in the PRL. */
+		if ((inpacket != NULL) && (priority_len < PRIORITY_COUNT) &&
+		    (inpacket->sv_echo_client_id == ISC_TRUE)) {
+			priority_list[priority_len++] =
+				DHO_DHCP_CLIENT_IDENTIFIER;
+		}
+
 		data_string_truncate(prl, (PRIORITY_COUNT - priority_len));
 
+		/*
+		 * Copy the client's PRL onto the priority_list after our high
+		 * priority header.
+		 */
 		for (i = 0; i < prl->len; i++) {
 			/*
 			 * Prevent client from changing order of delivery
@@ -1111,11 +1133,13 @@ store_options6(char *buf, int buflen,
 		}
 
 		/*
-		 * See if this is the VSIO option.
+		 * If this is the VSIO option flag it so we'll know to
+		 * check the vsio space later on.  However we still need
+		 * to check for the existence of any defined via
+		 * dhcp6.vendor-opts. Those are stored as simple values.
 		 */
 		if (code == vsio_option_code) {
 			vsio_wanted = 1;
-			continue;
 		}
 
 		/*
@@ -1739,7 +1763,7 @@ format_min_length(format, oc)
 		    case 'A': /* Array of all that precedes. */
 		    case 'a': /* Array of preceding symbol. */
 		    case 'Z': /* nothing. */
-		    case 'k': /* key name. */
+		    case 'k': /* key name */
 			return min_len;
 
 		    case 'c': /* Compress flag for D atom. */
@@ -1881,6 +1905,7 @@ const char *pretty_print_option (option, data, len, emit_commas, emit_quotes)
 			}
 			hunksize += k;
 			break;
+
 		      case 't':
 		      case 'k':
 			fmtbuf[l + 1] = 0;
@@ -2088,14 +2113,14 @@ const char *pretty_print_option (option, data, len, emit_commas, emit_quotes)
 
 					/* If emit_quotes, then use ISC DHCP
 					 * escapes.  Otherwise, rely only on
-					 * ns_name_ntop().
+					 * MRns_name_ntop().
 					 */
 					if (emit_quotes) {
 						nbp = nbuff;
 						pretty_domain(&op, endbuf-1,
 							      &nbp, nend);
 					} else {
-						/* ns_name_ntop() includes
+						/* MRns_name_ntop() includes
 						 * a trailing NUL in its
 						 * count.
 						 */
@@ -2226,11 +2251,12 @@ const char *pretty_print_option (option, data, len, emit_commas, emit_quotes)
 				log_error ("Unexpected format code %c",
 					   fmtbuf [j]);
 			}
+
 			op += strlen (op);
 			if (op >= endbuf) {
 				log_error ("Option data exceeds"
 					   " maximum size %d", MAX_OUTPUT_SIZE);
-				return ("<error>");
+					   return ("<error>");
 			}
 
 			if (dp == data + len)
@@ -2274,6 +2300,57 @@ int get_option (result, universe, packet, lease, client_state,
 				    file, line))
 		return 0;
 	return 1;
+}
+
+/*
+ * Look for the option and dig out the value assoicated with it.
+ * Currently this is used for 1 byte integers, it maybe expanded
+ * in the future to handle other integers at which point it will
+ * need a size argument.
+ */
+int get_option_int (result, universe, packet, lease, client_state,
+		    in_options, cfg_options, options, scope, code, file, line)
+	int *result;
+	struct universe *universe;
+	struct packet *packet;
+	struct lease *lease;
+	struct client_state *client_state;
+	struct option_state *in_options;
+	struct option_state *cfg_options;
+	struct option_state *options;
+	struct binding_scope **scope;
+	unsigned code;
+	const char *file;
+	int line;
+{
+	struct option_cache *oc;
+	struct data_string d1;
+	int rcode = 0;
+
+	/* basic sanity checks */
+	if ((options == NULL) || (universe->lookup_func == NULL))
+		return (0);
+
+	/* find the option cache */
+	oc = ((*universe->lookup_func)(universe, options, code));
+	if (!oc)
+		return (0);
+
+	/* if there is a value get it into the string */
+	memset(&d1, 0, sizeof(d1));
+	if (!evaluate_option_cache(&d1, packet, lease, client_state,
+				   in_options, cfg_options, scope, oc,
+				   file, line))
+		return (0);
+
+	/* If the length matches extract the value for the return */
+	if (d1.len == 1) {
+		*result = d1.data[0];
+		rcode = 1;
+	}
+	data_string_forget(&d1, MDL);
+
+	return (rcode);
 }
 
 void set_option (universe, options, option, op)
@@ -3243,7 +3320,7 @@ int nwip_option_space_encapsulate (result, packet, lease, client_state,
 	return status;
 }
 
-/* We don't want to use ns_name_pton()...it doesn't tell us how many bytes
+/* We don't want to use MRns_name_pton()...it doesn't tell us how many bytes
  * it has consumed, and it plays havoc with our escapes.
  *
  * So this function does DNS encoding, and returns either the number of
@@ -4036,6 +4113,9 @@ do_packet6(struct interface_info *interface, const char *packet,
 	unsigned char msg_type;
 	const struct dhcpv6_packet *msg;
 	const struct dhcpv6_relay_packet *relay;
+#ifdef DHCP4o6
+	const struct dhcpv4_over_dhcpv6_packet *msg46;
+#endif
 	struct packet *decoded_packet;
 #if defined (DEBUG_MEMORY_LEAKAGE)
 	unsigned long previous_outstanding = dmalloc_outstanding;
@@ -4097,6 +4177,28 @@ do_packet6(struct interface_info *interface, const char *packet,
 			packet_dereference(&decoded_packet, MDL);
 			return;
 		}
+#ifdef DHCP4o6
+	} else if ((msg_type == DHCPV6_DHCPV4_QUERY) ||
+		   (msg_type == DHCPV6_DHCPV4_RESPONSE)) {
+		int msglen =
+		    (int)(offsetof(struct dhcpv4_over_dhcpv6_packet, options));
+		msg46 = (struct dhcpv4_over_dhcpv6_packet *)packet;
+		decoded_packet->dhcpv6_msg_type = msg46->msg_type;
+
+		/* message-specific data */
+		memcpy(decoded_packet->dhcp4o6_flags,
+		       msg46->flags,
+		       sizeof(decoded_packet->dhcp4o6_flags));
+
+		if (!parse_option_buffer(decoded_packet->options,
+					 msg46->options, len - msglen,
+					 &dhcpv6_universe)) {
+			/* no logging here, as parse_option_buffer() logs all
+			   cases where it fails */
+			packet_dereference(&decoded_packet, MDL);
+			return;
+		}
+#endif
 	} else {
 		int msglen = (int)(offsetof(struct dhcpv6_packet, options));
 		msg = (const struct dhcpv6_packet *)packet;
@@ -4422,4 +4524,99 @@ int validate_packet(struct packet *packet)
 	/* @todo: Add checks for other received options */
 
 	return (1);
+}
+/*!
+ *
+ * \brief Parse a vendor option (option 43)
+ *
+ * After the server has parsed most of the options and presented the result
+ * to the user the user can set the proper vendor option space using
+ * vendor-option-space in the config file and then cause this routine to be
+ * called via parse-vendor-option in the config file.  This routine will
+ * then try and find the proper universe for the vendor-option-space and
+ * parse the vendor option string based on that universe.
+ *
+ * If the information isn't available (no vendor space, no universe for the
+ * vendor space, no vendor option in the options) or the decode fails we
+ * simply ignore the option and continue processing.
+ *
+ * \param packet      - structure to hold information about the packet being
+ *                      processed
+ * \param lease       - lease structure
+ * \param client_state
+ * \param in_options  - The incoming options, we expect to find the
+ *                      vendor-option (option 43, containing the string
+ *                      to parse) there.  We shall attach decoded options
+ *                      there.
+ * \param out_options - The options we have added as we process the packet.
+ *                      We expect to find the vendor-option-space there and
+ *                      use that to find the name of the vendor universe to use
+ * \param scope
+ *
+ * \return - void as there isn't much we can do about failures.
+ */
+void parse_vendor_option(packet, lease, client_state, in_options,
+			 out_options, scope)
+	struct packet *packet;
+	struct lease *lease;
+	struct client_state *client_state;
+	struct option_state *in_options;
+	struct option_state *out_options;
+	struct binding_scope **scope;
+{
+	struct option_cache *oc = NULL;
+	struct data_string name;
+	struct option *option = NULL;
+	unsigned int code = DHO_VENDOR_ENCAPSULATED_OPTIONS;
+
+	/* check if we are processing a packet, if not we can return */
+	if ((packet == NULL) || (in_options == NULL) || (out_options == NULL))
+		return;
+
+	/* Do we have any vendor option spaces? */
+	if (vendor_cfg_option == NULL)
+		return;
+
+	/* See if the admin has set a vendor option space name */
+	oc = lookup_option(vendor_cfg_option->universe,
+			   out_options, vendor_cfg_option->code);
+	if (oc == NULL)
+		return;
+
+	memset(&name, 0, sizeof(name));
+	(void) evaluate_option_cache(&name, packet, lease, client_state,
+			      in_options, out_options, scope, oc, MDL);
+
+	/* No name, all done */
+	if (name.len == 0) {
+		data_string_forget(&name, MDL);
+		return;
+	}
+
+	/* Get any vendor option information from the request */
+	oc = lookup_option(&dhcp_universe, in_options, code);
+
+	/* No vendor option, all done */
+	if ((oc == NULL) || (oc->data.len == 0)) {
+		data_string_forget(&name, MDL);
+		return;
+	}
+
+	/* Get the proper option to pass to the parse routine */
+	option_code_hash_lookup(&option, dhcp_universe.code_hash,
+				&code, 0, MDL);
+
+	/* Now that we have the data from the vendor option and a vendor
+	 * option space try to parse things.  On success the parsed options
+	 * will be added to the in_options list for future use.  A return
+	 * return of 1 indicates success, but not much we can do on error */
+	(void) parse_encapsulated_suboptions(in_options, option,
+					     oc->data.data, oc->data.len,
+					     &dhcp_universe,
+					     (const char *)name.data);
+
+	/* Lastly clean up any left overs */
+	data_string_forget(&name, MDL);
+	option_dereference(&option, MDL);
+	return;
 }

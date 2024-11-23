@@ -3,11 +3,17 @@
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
+/* Define to support binary insertion of leases into queues. */
+#undef BINARY_LEASES
+
 /* Define to compile debug-only DHCP software. */
 #undef DEBUG
 
 /* Define to queue multiple DHCPACK replies per fsync. */
 #undef DELAYED_ACK
+
+/* Define to 1 to include DHCPv4 over DHCPv6 support. */
+#undef DHCP4o6
 
 /* Define to BIG_ENDIAN for MSB (Motorola or SPARC CPUs) or LITTLE_ENDIAN for
    LSB (Intel CPUs). */
@@ -40,23 +46,32 @@
 /* Define to 1 to use the Berkeley Packet Filter interface code. */
 #undef HAVE_BPF
 
-/* Define to 1 if you have the /dev/random file. */
-#undef HAVE_DEV_RANDOM
-
 /* Define to 1 to use DLPI interface code. */
 #undef HAVE_DLPI
 
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #undef HAVE_IFADDRS_H
 
+/* Define to 1 if you have the `inet_ntop' function. */
+#undef HAVE_INET_NTOP
+
+/* Define to 1 if you have the `inet_pton' function. */
+#undef HAVE_INET_PTON
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <ldap.h> header file. */
+#undef HAVE_LDAP_H
 
 /* Define to 1 if you have the <linux/types.h> header file. */
 #undef HAVE_LINUX_TYPES_H
 
 /* Define to 1 to use the Linux Packet Filter interface code. */
 #undef HAVE_LPF
+
+/* Define to 1 if you have the <micasa_mgmd.h> header file. */
+#undef HAVE_MICASA_MGMD_H
 
 /* Define to 1 if you have the <minix/config.h> header file. */
 #undef HAVE_MINIX_CONFIG_H
@@ -109,6 +124,9 @@
 /* Define to the string for a noreturn attribute. */
 #undef ISC_DHCP_NORETURN
 
+/* Define if you have the /dev/random or other configured file. */
+#undef ISC_PATH_RANDOMDEV
+
 /* Define to 1 if the system has 'struct if_laddrconf'. */
 #undef ISC_PLATFORM_HAVEIF_LADDRCONF
 
@@ -145,8 +163,8 @@
 /* Define to any value to include Ari's PARANOIA patch. */
 #undef PARANOIA
 
-/* Define to correct bad byteorders in secs field. */
-#undef SECS_BYTEORDER
+/* Define to 1 to include relay port support. */
+#undef RELAY_PORT
 
 /* The size of `struct iaddr *', as computed by sizeof. */
 #undef SIZEOF_STRUCT_IADDR_P

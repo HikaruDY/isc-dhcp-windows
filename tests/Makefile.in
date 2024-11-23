@@ -95,9 +95,8 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/includes/config.h
-CONFIG_CLEAN_FILES = unittest.sh
+CONFIG_CLEAN_FILES = Makefile.am unittest.sh
 CONFIG_CLEAN_VPATH_FILES =
-AR = ar
 ARFLAGS = cru
 AM_V_AR = $(am__v_AR_@AM_V@)
 am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
@@ -160,12 +159,14 @@ am__define_uniq_tagged_files = \
   unique=`for i in $$list; do \
     if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
   done | $(am__uniquify_input)`
-am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/unittest.sh.in \
-	$(top_srcdir)/depcomp
+am__DIST_COMMON = $(srcdir)/Makefile.am.in $(srcdir)/Makefile.in \
+	$(srcdir)/unittest.sh.in $(top_srcdir)/depcomp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+A = @A@
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
+AR = @AR@
 ATF_BIN = @ATF_BIN@
 ATF_CFLAGS = @ATF_CFLAGS@
 ATF_LDFLAGS = @ATF_LDFLAGS@
@@ -173,6 +174,16 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BINDCONFIG = @BINDCONFIG@
+BINDDIR = @BINDDIR@
+BINDIOMUX = @BINDIOMUX@
+BINDLIBDNSDIR = @BINDLIBDNSDIR@
+BINDLIBIRSDIR = @BINDLIBIRSDIR@
+BINDLIBISCCFGDIR = @BINDLIBISCCFGDIR@
+BINDLIBISCDIR = @BINDLIBISCDIR@
+BINDLT = @BINDLT@
+BINDSRCDIR = @BINDSRCDIR@
+BINDSUBDIR = @BINDSUBDIR@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -182,6 +193,10 @@ CTAGS = @CTAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DHLIBS = @DHLIBS@
+DISTCHECK_ATF_CONFIGURE_FLAG = @DISTCHECK_ATF_CONFIGURE_FLAG@
+DISTCHECK_LIBBIND_CONFIGURE_FLAG = @DISTCHECK_LIBBIND_CONFIGURE_FLAG@
+DISTCHECK_LIBTOOL_CONFIGURE_FLAG = @DISTCHECK_LIBTOOL_CONFIGURE_FLAG@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -192,6 +207,8 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+LDAP_CFLAGS = @LDAP_CFLAGS@
+LDAP_LIBS = @LDAP_LIBS@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
@@ -208,10 +225,12 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+Q = @Q@
 RANLIB = @RANLIB@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+UNITTESTS = @UNITTESTS@
 VERSION = @VERSION@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -331,6 +350,8 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
+Makefile.am: $(top_builddir)/config.status $(srcdir)/Makefile.am.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 unittest.sh: $(top_builddir)/config.status $(srcdir)/unittest.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 

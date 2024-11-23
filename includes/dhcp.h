@@ -3,13 +3,12 @@
    Protocol structures... */
 
 /*
- * Copyright (c) 2011-2012,2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004-2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -20,8 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -157,6 +156,7 @@ struct dhcp_packet {
 #define DHO_AUTHENTICATE			90  /* RFC3118, was 210 */
 #define DHO_CLIENT_LAST_TRANSACTION_TIME	91
 #define DHO_ASSOCIATED_IP			92
+#define DHO_V6_ONLY_PREFERRED			108 /* RFC8925 */
 #define DHO_SUBNET_SELECTION			118 /* RFC3011! */
 #define DHO_DOMAIN_SEARCH			119 /* RFC3397 */
 #define DHO_VIVCO_SUBOPTIONS			124
@@ -184,6 +184,8 @@ struct dhcp_packet {
 #define RAI_REMOTE_ID	2
 #define RAI_AGENT_ID	3
 #define RAI_LINK_SELECT	5
+/* not yet assigned but next free value */
+#define RAI_RELAY_PORT  19
 
 /* FQDN suboptions: */
 #define FQDN_NO_CLIENT_UPDATE		1
@@ -200,4 +202,3 @@ struct dhcp_packet {
 #define VENDOR_ISC_SUBOPTIONS		2495
 
 #endif /* DHCP_H */
-

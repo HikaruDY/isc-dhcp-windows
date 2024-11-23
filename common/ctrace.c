@@ -3,12 +3,12 @@
    Subroutines that support dhcp tracing... */
 
 /*
- * Copyright (c) 2004-2016 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2001-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -19,8 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -44,7 +44,7 @@ void trace_interface_register (trace_type_t *ttype, struct interface_info *ip)
 		tipkt.index = htonl (ip -> index);
 
 		trace_write_packet (ttype, sizeof tipkt, (char *)&tipkt, MDL);
-	}	
+	}
 }
 
 void trace_interface_input (trace_type_t *ttype, unsigned len, char *buf)
@@ -61,7 +61,7 @@ void trace_interface_input (trace_type_t *ttype, unsigned len, char *buf)
 		return;
 	}
 	tipkt = (trace_interface_packet_t *)buf;
-	
+
 	ip = (struct interface_info *)0;
 	status = interface_allocate (&ip, MDL);
 	if (status != ISC_R_SUCCESS) {
@@ -85,7 +85,7 @@ void trace_interface_input (trace_type_t *ttype, unsigned len, char *buf)
 	ip->address_count = ip->address_max = 1;
 	ip->addresses = dmalloc(sizeof(*ip->addresses), MDL);
 	if (!ip->addresses) {
-		dfree(ip->ifp, MDL); 
+		dfree(ip->ifp, MDL);
 		ip->ifp = NULL;
 		interface_dereference (&ip, MDL);
 		status = ISC_R_NOMEMORY;
@@ -183,7 +183,7 @@ void trace_inpacket_input (trace_type_t *ttype, unsigned len, char *buf)
 	tip = (trace_inpacket_t *)buf;
 	index = ntohl (tip -> index);
 	tip -> from.len = ntohl (tip -> from.len);
-	
+
 	if (index > interface_count ||
 	    index < 0 ||
 	    !interface_vector [index]) {
@@ -259,7 +259,7 @@ void trace_outpacket_input (trace_type_t *ttype, unsigned len, char *buf)
 	}
 	tip = (trace_outpacket_t *)buf;
 	index = ntohl (tip -> index);
-	
+
 	if (index > interface_count ||
 	    index < 0 ||
 	    !interface_vector [index]) {

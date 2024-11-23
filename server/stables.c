@@ -3,12 +3,12 @@
    Tables of information only used by server... */
 
 /*
- * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -19,8 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -66,7 +66,7 @@ struct failover_option_info ft_options [] =
 	  FM_OFFSET(ip_flags), FTB_IP_FLAGS },
 	{ FTO_LEASE_EXPIRY, "lease-expiration-time", FT_UINT32, 1,
 	  FM_OFFSET(expiry), FTB_LEASE_EXPIRY },
-	{ FTO_MAX_UNACKED, "max-unacked-bndupd", FT_UINT32, 1, 
+	{ FTO_MAX_UNACKED, "max-unacked-bndupd", FT_UINT32, 1,
 	  FM_OFFSET(max_unacked), FTB_MAX_UNACKED },
 	{ FTO_MCLT, "MCLT", FT_UINT32, 1, FM_OFFSET(mclt), FTB_MCLT },
 	{ FTO_MESSAGE, "message", FT_TEXT, 0,
@@ -169,6 +169,7 @@ static struct option agent_options[] = {
 	{ "agent-id", "I",			&agent_universe,   3, 1 },
 	{ "DOCSIS-device-class", "L",		&agent_universe,   4, 1 },
 	{ "link-selection", "I",		&agent_universe,   5, 1 },
+	{ "relay-port", "Z",			&agent_universe,  19, 1 },
 	{ NULL, NULL, NULL, 0, 0 }
 };
 
@@ -238,15 +239,124 @@ static struct option server_options[] = {
 	{ "delayed-ack", "S",			&server_universe,  58, 1 },
 	{ "max-ack-delay", "L",			&server_universe,  59, 1 },
 #endif
+#if defined(LDAP_CONFIGURATION)
+	{ "ldap-server", "t",			&server_universe,  60, 1 },
+	{ "ldap-port", "L",			&server_universe,  61, 1 },
+	{ "ldap-username", "t",			&server_universe,  62, 1 },
+	{ "ldap-password", "t",			&server_universe,  63, 1 },
+	{ "ldap-base-dn", "t",			&server_universe,  64, 1 },
+	{ "ldap-method", "Nldap-methods.",	&server_universe,  65, 1 },
+	{ "ldap-debug-file", "t",		&server_universe,  66, 1 },
+	{ "ldap-dhcp-server-cn", "t",		&server_universe,  67, 1 },
+	{ "ldap-referrals", "f",		&server_universe,  68, 1 },
+#if defined(LDAP_USE_SSL)
+	{ "ldap-ssl", "Nldap-ssl-usage.",	&server_universe,  69, 1 },
+	{ "ldap-tls-reqcert", "Nldap-tls-reqcert.",	&server_universe,  70, 1 },
+	{ "ldap-tls-ca-file", "t",		&server_universe,  71, 1 },
+	{ "ldap-tls-ca-dir", "t",		&server_universe,  72, 1 },
+	{ "ldap-tls-cert", "t",			&server_universe,  73, 1 },
+	{ "ldap-tls-key", "t",			&server_universe,  74, 1 },
+	{ "ldap-tls-crlcheck", "Nldap-tls-crlcheck.",	&server_universe,  75, 1 },
+	{ "ldap-tls-ciphers", "t",		&server_universe,  76, 1 },
+	{ "ldap-tls-randfile", "t",		&server_universe,  77, 1 },
+	{ "ldap-init-retry", "L",       	&server_universe,  SV_LDAP_INIT_RETRY, 1 },
+#endif /* LDAP_USE_SSL */
+#if defined(LDAP_USE_GSSAPI)
+	{ "ldap-gssapi-keytab", "t",        &server_universe,  SV_LDAP_GSSAPI_KEYTAB, 1},
+	{ "ldap-gssapi-principal", "t",     &server_universe,  SV_LDAP_GSSAPI_PRINCIPAL, 1},
+#endif /* LDAP_USE_GSSAPI */
+#endif /* LDAP_CONFIGURATION */
+	{ "dhcp-cache-threshold", "B",		&server_universe,  78, 1 },
+	{ "dont-use-fsync", "f",		&server_universe,  79, 1 },
+	{ "ddns-local-address4", "I",		&server_universe,  80, 1 },
+	{ "ddns-local-address6", "6",		&server_universe,  81, 1 },
+	{ "ignore-client-uids", "f",		&server_universe,  82, 1 },
+	{ "log-threshold-low", "B",		&server_universe,  83, 1 },
+	{ "log-threshold-high", "B",		&server_universe,  84, 1 },
+	{ "echo-client-id", "f",		&server_universe,  SV_ECHO_CLIENT_ID, 1 },
+	{ "server-id-check", "f",		&server_universe,  SV_SERVER_ID_CHECK, 1 },
+	{ "prefix-length-mode", "Nprefix_length_modes.",	&server_universe,  SV_PREFIX_LEN_MODE, 1 },
 	{ "dhcpv6-set-tee-times", "f",		&server_universe,  SV_DHCPV6_SET_TEE_TIMES, 1 },
 	{ "abandon-lease-time", "T",		&server_universe,  SV_ABANDON_LEASE_TIME, 1 },
+#ifdef EUI_64
+	{ "use-eui-64", "f",		&server_universe,  SV_USE_EUI_64, 1 },
+	{ "persist-eui-64-leases", "f",	&server_universe,  SV_PERSIST_EUI_64_LEASES, 1 },
+#endif
+#if defined (FAILOVER_PROTOCOL)
+	{ "check-secs-byte-order", "f", &server_universe, SV_CHECK_SECS_BYTE_ORDER, 1 },
+#endif
+	{ "ddns-dual-stack-mixed-mode", "f",		&server_universe,  SV_DDNS_DUAL_STACK_MIXED_MODE, 1 },
+	{ "ddns-guard-id-must-match", "f",		&server_universe,  SV_DDNS_GUARD_ID_MUST_MATCH, 1 },
+	{ "ddns-other-guard-is-dynamic", "f",		&server_universe,  SV_DDNS_OTHER_GUARD_IS_DYNAMIC, 1 },
+	{ "release-on-roam", "f",	&server_universe,  SV_RELEASE_ON_ROAM, 1 },
+	{ "local-address6", "6",	&server_universe,  SV_LOCAL_ADDRESS6, 1 },
+	{ "bind-local-address6", "f",	&server_universe,  SV_BIND_LOCAL_ADDRESS6, 1 },
+	{ "ping-cltt-secs", "T",	&server_universe,  SV_PING_CLTT_SECS, 1 },
+	{ "ping-timeout-ms", "T",       &server_universe,  SV_PING_TIMEOUT_MS, 1 },
 	{ NULL, NULL, NULL, 0, 0 }
 };
+
+#if defined(LDAP_CONFIGURATION)
+struct enumeration_value ldap_values [] = {
+	{ "static", LDAP_METHOD_STATIC },
+	{ "dynamic", LDAP_METHOD_DYNAMIC },
+	{ (char *) 0, 0 }
+};
+
+struct enumeration ldap_methods = {
+	(struct enumeration *)0,
+	"ldap-methods", 1,
+	ldap_values
+};
+
+#if defined(LDAP_USE_SSL)
+struct enumeration_value ldap_ssl_usage_values [] = {
+	{ "off", LDAP_SSL_OFF },
+	{ "on",LDAP_SSL_ON },
+	{ "ldaps", LDAP_SSL_LDAPS },
+	{ "start_tls", LDAP_SSL_TLS },
+	{ (char *) 0, 0 }
+};
+
+struct enumeration ldap_ssl_usage_enum = {
+	(struct enumeration *)0,
+	"ldap-ssl-usage", 1,
+	ldap_ssl_usage_values
+};
+
+struct enumeration_value ldap_tls_reqcert_values [] = {
+	{ "never", LDAP_OPT_X_TLS_NEVER },
+	{ "hard", LDAP_OPT_X_TLS_HARD  },
+	{ "demand", LDAP_OPT_X_TLS_DEMAND},
+	{ "allow", LDAP_OPT_X_TLS_ALLOW },
+	{ "try", LDAP_OPT_X_TLS_TRY   },
+	{ (char *) 0, 0 }
+};
+struct enumeration ldap_tls_reqcert_enum = {
+	(struct enumeration *)0,
+	"ldap-tls-reqcert", 1,
+	ldap_tls_reqcert_values
+};
+
+struct enumeration_value ldap_tls_crlcheck_values [] = {
+	{ "none", LDAP_OPT_X_TLS_CRL_NONE},
+	{ "peer", LDAP_OPT_X_TLS_CRL_PEER},
+	{ "all",  LDAP_OPT_X_TLS_CRL_ALL },
+	{ (char *) 0, 0 }
+};
+struct enumeration ldap_tls_crlcheck_enum = {
+	(struct enumeration *)0,
+	"ldap-tls-crlcheck", 1,
+	ldap_tls_crlcheck_values
+};
+#endif
+#endif
 
 struct enumeration_value ddns_styles_values [] = {
 	{ "none", 0 },
 	{ "ad-hoc", 1 },
 	{ "interim", 2 },
+	{ "standard", 3 },
 	{ (char *)0, 0 }
 };
 
@@ -254,6 +364,21 @@ struct enumeration ddns_styles = {
 	(struct enumeration *)0,
 	"ddns-styles", 1,
 	ddns_styles_values
+};
+
+struct enumeration_value prefix_length_modes_values[] = {
+        { "ignore", PLM_IGNORE },
+        { "prefer", PLM_PREFER },
+        { "exact", PLM_EXACT },
+        { "minimum", PLM_MINIMUM },
+        { "maximum", PLM_MAXIMUM },
+        { (char *)0, 0 }
+};
+
+struct enumeration prefix_length_modes = {
+        (struct enumeration *)0,
+        "prefix_length_modes", 1,
+        prefix_length_modes_values
 };
 
 struct enumeration_value syslog_values [] = {

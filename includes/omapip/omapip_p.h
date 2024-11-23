@@ -3,12 +3,12 @@
    Private master include file for the OMAPI library. */
 
 /*
- * Copyright (c) 2004-2019 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -19,8 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -57,13 +57,23 @@
 #include "osdep.h"
  */
 
-#include <isc-dhcp/dst.h>
-#include <isc-dhcp/result.h>
+#include <dst/dst.h>
+#include "result.h"
+
+/* Uncomment this to enable protocol level debug logs */
+/* #define DEBUG_PROTOCOL 1 */
 
 #include <omapip/convert.h>
 #include <omapip/hash.h>
 #include <omapip/omapip.h>
 #include <omapip/trace.h>
+
+/* DST_API control flags */
+/* These are used in functions dst_sign_data and dst_verify_data */
+#define SIG_MODE_INIT		1  /* initalize digest */
+#define SIG_MODE_UPDATE		2  /* add data to digest */
+#define SIG_MODE_FINAL		4  /* generate/verify signature */
+#define SIG_MODE_ALL		(SIG_MODE_INIT|SIG_MODE_UPDATE|SIG_MODE_FINAL)
 
 /* OMAPI protocol header, version 1.00 */
 typedef struct {
@@ -127,7 +137,7 @@ typedef struct __omapi_remote_auth {
 
 typedef struct __omapi_protocol_object {
 	OMAPI_OBJECT_PREAMBLE;
-	u_int32_t header_size;		
+	u_int32_t header_size;
 	u_int32_t protocol_version;
 	u_int32_t next_xid;
 
@@ -184,10 +194,10 @@ typedef struct __omapi_connection_object {
 	omapi_buffer_t *outbufs;
 	omapi_listener_object_t *listener;	/* Listener that accepted this
 						   connection, if any. */
-	DST_KEY *in_key;	/* Authenticator signing incoming
+	dst_key_t *in_key;	/* Authenticator signing incoming
 				   data. */
 	void *in_context;	/* Input hash context. */
-	DST_KEY *out_key;	/* Authenticator signing outgoing
+	dst_key_t *out_key;	/* Authenticator signing outgoing
 				   data. */
 	void *out_context;	/* Output hash context. */
 } omapi_connection_object_t;
@@ -200,6 +210,8 @@ typedef struct __omapi_io_object {
 	isc_result_t (*reader) (omapi_object_t *);
 	isc_result_t (*writer) (omapi_object_t *);
 	isc_result_t (*reaper) (omapi_object_t *);
+	isc_socket_t *fd;
+	isc_boolean_t closed; /* ISC_TRUE = closed, do not use */
 } omapi_io_object_t;
 
 typedef struct __omapi_generic_object {
@@ -249,7 +261,7 @@ OMAPI_OBJECT_ALLOC_DECL (omapi_message,
 			 omapi_message_object_t, omapi_type_message)
 
 isc_result_t omapi_connection_sign_data (int mode,
-					 DST_KEY *key,
+					 dst_key_t *key,
 					 void **context,
 					 const unsigned char *data,
 					 const unsigned len,
@@ -263,8 +275,6 @@ void omapi_connection_trace_setup (void);
 void omapi_buffer_trace_setup (void);
 void omapi_connection_register (omapi_connection_object_t *,
 				const char *, int);
-void trace_mr_init (void);
-
 OMAPI_ARRAY_TYPE_DECL(omapi_listener, omapi_listener_object_t);
 OMAPI_ARRAY_TYPE_DECL(omapi_connection, omapi_connection_object_t);
 
@@ -286,8 +296,6 @@ void do_percentm (char *obuf, size_t obufsize, const char *ibuf);
 
 isc_result_t uerr2isc (int);
 isc_result_t ns_rcode_to_isc (int);
-
-const char *isc_file_basename(const char *filename);
 
 extern omapi_message_object_t *omapi_registered_messages;
 

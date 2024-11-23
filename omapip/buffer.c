@@ -3,13 +3,12 @@
    Buffer access functions for the object management protocol... */
 
 /*
- * Copyright (c) 2009,2012-2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2005,2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -20,8 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -147,9 +146,9 @@ static isc_result_t omapi_connection_reader_trace (omapi_object_t *h,
 	int read_status;
 	omapi_connection_object_t *c;
 	unsigned bytes_to_read;
-	
+
 	if (!h || h -> type != omapi_type_connection)
-		return ISC_R_INVALIDARG;
+		return DHCP_R_INVALIDARG;
 	c = (omapi_connection_object_t *)h;
 
 	/* See if there are enough bytes. */
@@ -211,7 +210,7 @@ static isc_result_t omapi_connection_reader_trace (omapi_object_t *h,
 			else if (errno == EIO)
 				return ISC_R_IOERROR;
 			else if (errno == EINVAL)
-				return ISC_R_INVALIDARG;
+				return DHCP_R_INVALIDARG;
 			else if (errno == ECONNRESET) {
 				omapi_disconnect (h, 1);
 				return ISC_R_SHUTTINGDOWN;
@@ -276,7 +275,7 @@ isc_result_t omapi_connection_copyin (omapi_object_t *h,
 
 	/* no need to verify len as it's unsigned */
 	if (!h || h -> type != omapi_type_connection)
-		return ISC_R_INVALIDARG;
+		return DHCP_R_INVALIDARG;
 	c = (omapi_connection_object_t *)h;
 
 	/* If the connection is closed, return an error if the caller
@@ -292,7 +291,7 @@ isc_result_t omapi_connection_copyin (omapi_object_t *h,
 	} else {
 		status = omapi_buffer_new (&c -> outbufs, MDL);
 		if (status != ISC_R_SUCCESS)
-			return status;
+			goto leave;
 		buffer = c -> outbufs;
 	}
 
@@ -302,7 +301,7 @@ isc_result_t omapi_connection_copyin (omapi_object_t *h,
 		if (!BUFFER_BYTES_FREE (buffer)) {
 			status = (omapi_buffer_new (&buffer -> next, MDL));
 			if (status != ISC_R_SUCCESS)
-				return status;
+				goto leave;
 			buffer = buffer -> next;
 		}
 
@@ -322,7 +321,7 @@ isc_result_t omapi_connection_copyin (omapi_object_t *h,
 				 &bufp [bytes_copied], copy_len,
 				 (omapi_typed_data_t **)0);
 			if (status != ISC_R_SUCCESS)
-				return status;
+				goto leave;
 		}
 
 		memcpy (&buffer -> buf [buffer -> tail],
@@ -333,7 +332,25 @@ isc_result_t omapi_connection_copyin (omapi_object_t *h,
 		if (buffer -> tail == sizeof buffer -> buf)
 			buffer -> tail = 0;
 	}
-	return ISC_R_SUCCESS;
+
+	status = ISC_R_SUCCESS;
+
+ leave:
+	/*
+	 * If we have any bytes to send and we have a proper io object
+	 * inform the socket code that we would like to know when we
+	 * can send more bytes.
+	 */
+	if (c->out_bytes != 0) {
+		if ((c->outer != NULL) &&
+		    (c->outer->type == omapi_type_io_object)) {
+			omapi_io_object_t *io = (omapi_io_object_t *)c->outer;
+			isc_socket_fdwatchpoke(io->fd,
+					       ISC_SOCKFDWATCH_WRITE);
+		}
+	}
+
+	return (status);
 }
 
 /* Copy some bytes from the input buffer, and advance the input buffer
@@ -353,7 +370,7 @@ isc_result_t omapi_connection_copyout (unsigned char *buf,
 	isc_result_t status;
 
 	if (!h || h -> type != omapi_type_connection)
-		return ISC_R_INVALIDARG;
+		return DHCP_R_INVALIDARG;
 	c = (omapi_connection_object_t *)h;
 
 	if (size > c -> in_bytes)
@@ -404,7 +421,7 @@ isc_result_t omapi_connection_copyout (unsigned char *buf,
 			buffer -> head = first_byte + bytes_this_copy - 1;
 			c -> in_bytes -= bytes_this_copy;
 		}
-			
+
 		if (!BYTES_IN_BUFFER (buffer))
 			buffer = buffer -> next;
 	}
@@ -437,7 +454,7 @@ isc_result_t omapi_connection_writer (omapi_object_t *h)
 	omapi_connection_object_t *c;
 
 	if (!h || h -> type != omapi_type_connection)
-		return ISC_R_INVALIDARG;
+		return DHCP_R_INVALIDARG;
 	c = (omapi_connection_object_t *)h;
 
 	/* Already flushed... */
@@ -471,7 +488,7 @@ isc_result_t omapi_connection_writer (omapi_object_t *h)
 			   are really errors. */
 			if (bytes_written < 0) {
 				if (errno == EWOULDBLOCK || errno == EAGAIN)
-					return ISC_R_SUCCESS;
+					return ISC_R_INPROGRESS;
 				else if (errno == EPIPE)
 					return ISC_R_NOCONN;
 #ifdef EDQUOT
@@ -485,28 +502,28 @@ isc_result_t omapi_connection_writer (omapi_object_t *h)
 				else if (errno == EIO)
 					return ISC_R_IOERROR;
 				else if (errno == EINVAL)
-					return ISC_R_INVALIDARG;
+					return DHCP_R_INVALIDARG;
 				else if (errno == ECONNRESET)
 					return ISC_R_SHUTTINGDOWN;
 				else
 					return ISC_R_UNEXPECTED;
 			}
 			if (bytes_written == 0)
-				return ISC_R_SUCCESS;
+				return ISC_R_INPROGRESS;
 
 #if defined (TRACING)
 			if (trace_record ()) {
 				isc_result_t status;
 				trace_iov_t iov [2];
 				int32_t connect_index;
-				
+
 				connect_index = htonl (c -> index);
-				
+
 				iov [0].buf = (char *)&connect_index;
 				iov [0].len = sizeof connect_index;
 				iov [1].buf = &buffer -> buf [buffer -> tail];
 				iov [1].len = bytes_written;
-				
+
 				status = (trace_write_packet_iov
 					  (trace_connection_input, 2, iov,
 					   MDL));
@@ -526,13 +543,13 @@ isc_result_t omapi_connection_writer (omapi_object_t *h)
 			   O.S. output buffer and a further write would block,
 			   so stop trying to flush now. */
 			if (bytes_written != bytes_this_write)
-				return ISC_R_SUCCESS;
+				return ISC_R_INPROGRESS;
 		}
-			
+
 		if (!BYTES_IN_BUFFER (buffer))
 			buffer = buffer -> next;
 	}
-		
+
 	/* Get rid of any output buffers we emptied. */
 	buffer = (omapi_buffer_t *)0;
 	while (c -> outbufs &&
@@ -548,6 +565,15 @@ isc_result_t omapi_connection_writer (omapi_object_t *h)
 			omapi_buffer_dereference (&buffer, MDL);
 		}
 	}
+
+	/* If we had data left to write when we're told to disconnect,
+	* we need recall disconnect, now that we're done writing.
+	* See rt46767. */
+	if (c->out_bytes == 0 && c->state == omapi_connection_disconnecting) {
+		omapi_disconnect (h, 1);
+		return ISC_R_SHUTTINGDOWN;
+	}
+
 	return ISC_R_SUCCESS;
 }
 
@@ -572,7 +598,7 @@ isc_result_t omapi_connection_put_uint32 (omapi_object_t *c,
 	u_int32_t inbuf;
 
 	inbuf = htonl (value);
-	
+
 	return omapi_connection_copyin (c, (unsigned char *)&inbuf,
 					sizeof inbuf);
 }
@@ -598,7 +624,7 @@ isc_result_t omapi_connection_put_uint16 (omapi_object_t *c,
 	u_int16_t inbuf;
 
 	inbuf = htons (value);
-	
+
 	return omapi_connection_copyin (c, (unsigned char *)&inbuf,
 					sizeof inbuf);
 }
@@ -646,7 +672,7 @@ isc_result_t omapi_connection_write_typed_data (omapi_object_t *c,
 		return omapi_connection_put_uint32 (c, handle);
 
 	}
-	return ISC_R_INVALIDARG;
+	return DHCP_R_INVALIDARG;
 }
 
 isc_result_t omapi_connection_put_name (omapi_object_t *c, const char *name)
@@ -695,4 +721,22 @@ isc_result_t omapi_connection_put_handle (omapi_object_t *c, omapi_object_t *h)
 	if (status != ISC_R_SUCCESS)
 		return status;
 	return omapi_connection_put_uint32 (c, handle);
+}
+
+isc_result_t omapi_connection_put_named_uint32 (omapi_object_t *c,
+						const char *name,
+						u_int32_t value)
+{
+	isc_result_t status;
+
+	status = omapi_connection_put_name(c, name);
+	if (status != ISC_R_SUCCESS)
+		return (status);
+
+	status = omapi_connection_put_uint32(c, sizeof(u_int32_t));
+	if (status != ISC_R_SUCCESS)
+		return (status);
+
+	status = omapi_connection_put_uint32(c, value);
+	return (status);
 }

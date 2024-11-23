@@ -1,9 +1,10 @@
 SUBDIRS = .
 
 AM_CPPFLAGS = $(ATF_CFLAGS) -DUNIT_TEST -I$(top_srcdir)/includes
+AM_CPPFLAGS += -I@BINDDIR@/include -I$(top_srcdir)
 AM_CPPFLAGS += -DLOCALSTATEDIR='"."'
 
-EXTRA_DIST = Atffile
+EXTRA_DIST = Atffile Kyuafile
 
 # for autotools debugging only
 info:
@@ -13,10 +14,12 @@ info:
 
 DHCPSRC = ../dhcrelay.c
 
-DHCPLIBS = $(top_builddir)/common/libdhcp.a \
-	  $(top_builddir)/omapip/libomapi.a \
-	  $(top_builddir)/dst/libdst.a \
-	  $(top_builddir)/minires/libres.a
+DHCPLIBS = $(top_builddir)/common/libdhcp.@A@ \
+	  $(top_builddir)/omapip/libomapi.@A@    \
+	  @BINDLIBIRSDIR@/libirs.@A@ \
+	  @BINDLIBDNSDIR@/libdns.@A@ \
+	  @BINDLIBISCCFGDIR@/libisccfg.@A@ \
+	  @BINDLIBISCDIR@/libisc.@A@
 
 ATF_TESTS =
 if HAVE_ATF
@@ -32,12 +35,13 @@ relay_unittests_LDADD += $(DHCPLIBS)
 check: $(ATF_TESTS)
 	@if test $(top_srcdir) != ${top_builddir}; then \
 		cp $(top_srcdir)/relay/tests/Atffile Atffile; \
+		cp $(top_srcdir)/relay/tests/Kyuafile Kyuafile; \
 	fi
 	sh ${top_builddir}/tests/unittest.sh
 
 distclean-local:
 	@if test $(top_srcdir) != ${top_builddir}; then \
-		rm -f Atffile;
+		rm -f Atffile Kyuafile; \
 	fi
 
 endif

@@ -3,13 +3,12 @@
    Definitions for the object management API and protocol... */
 
 /*
- * Copyright (c) 2009,2013-2014,2016 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -20,8 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -29,8 +28,10 @@
 
 #ifndef _OMAPIP_H_
 #define _OMAPIP_H_
-#include <isc-dhcp/result.h>
+#include "result.h"
 #include <stdarg.h>
+
+#include <dns/tsec.h>
 
 typedef unsigned int omapi_handle_t;
 
@@ -92,7 +93,7 @@ typedef struct {
 typedef struct __omapi_object_type_t {
 	const char *name;
 	struct __omapi_object_type_t *next;
-	
+
 	isc_result_t (*set_value) (omapi_object_t *, omapi_object_t *,
 				   omapi_data_string_t *,
 				   omapi_typed_data_t *);
@@ -148,6 +149,7 @@ typedef struct auth_key {
 	char *name;
 	char *algorithm;
 	omapi_data_string_t *key;
+	dns_tsec_t *tsec_key;
 } omapi_auth_key_t;
 
 #define OMAPI_CREATE          1
@@ -282,7 +284,7 @@ isc_result_t omapi_protocol_set_value (omapi_object_t *, omapi_object_t *,
 				       omapi_typed_data_t *);
 isc_result_t omapi_protocol_get_value (omapi_object_t *, omapi_object_t *,
 				       omapi_data_string_t *,
-				       omapi_value_t **); 
+				       omapi_value_t **);
 isc_result_t omapi_protocol_stuff_values (omapi_object_t *,
 					  omapi_object_t *,
 					  omapi_object_t *);
@@ -301,7 +303,7 @@ isc_result_t omapi_protocol_listener_set_value (omapi_object_t *,
 isc_result_t omapi_protocol_listener_get_value (omapi_object_t *,
 						omapi_object_t *,
 						omapi_data_string_t *,
-						omapi_value_t **); 
+						omapi_value_t **);
 isc_result_t omapi_protocol_listener_destroy (omapi_object_t *,
 					      const char *, int);
 isc_result_t omapi_protocol_listener_signal (omapi_object_t *,
@@ -332,7 +334,7 @@ isc_result_t omapi_connection_set_value (omapi_object_t *, omapi_object_t *,
 					 omapi_typed_data_t *);
 isc_result_t omapi_connection_get_value (omapi_object_t *, omapi_object_t *,
 					 omapi_data_string_t *,
-					 omapi_value_t **); 
+					 omapi_value_t **);
 isc_result_t omapi_connection_destroy (omapi_object_t *, const char *, int);
 isc_result_t omapi_connection_signal_handler (omapi_object_t *,
 					      const char *, va_list);
@@ -345,7 +347,9 @@ isc_result_t omapi_connection_put_name (omapi_object_t *, const char *);
 isc_result_t omapi_connection_put_string (omapi_object_t *, const char *);
 isc_result_t omapi_connection_put_handle (omapi_object_t *c,
 					  omapi_object_t *h);
-
+isc_result_t omapi_connection_put_named_uint32 (omapi_object_t *,
+						const char *,
+						u_int32_t);
 isc_result_t omapi_listen (omapi_object_t *, unsigned, int);
 isc_result_t omapi_listen_addr (omapi_object_t *,
 				omapi_addr_t *, int);
@@ -361,7 +365,7 @@ isc_result_t omapi_listener_set_value (omapi_object_t *, omapi_object_t *,
 				       omapi_typed_data_t *);
 isc_result_t omapi_listener_get_value (omapi_object_t *, omapi_object_t *,
 				       omapi_data_string_t *,
-				       omapi_value_t **); 
+				       omapi_value_t **);
 isc_result_t omapi_listener_destroy (omapi_object_t *, const char *, int);
 isc_result_t omapi_listener_signal_handler (omapi_object_t *,
 					    const char *, va_list);
@@ -389,7 +393,7 @@ isc_result_t omapi_io_set_value (omapi_object_t *, omapi_object_t *,
 				 omapi_data_string_t *,
 				 omapi_typed_data_t *);
 isc_result_t omapi_io_get_value (omapi_object_t *, omapi_object_t *,
-				 omapi_data_string_t *, omapi_value_t **); 
+				 omapi_data_string_t *, omapi_value_t **);
 isc_result_t omapi_io_destroy (omapi_object_t *, const char *, int);
 isc_result_t omapi_io_signal_handler (omapi_object_t *, const char *, va_list);
 isc_result_t omapi_io_stuff_values (omapi_object_t *,
@@ -407,7 +411,7 @@ isc_result_t omapi_generic_set_value  (omapi_object_t *, omapi_object_t *,
 				       omapi_typed_data_t *);
 isc_result_t omapi_generic_get_value (omapi_object_t *, omapi_object_t *,
 				      omapi_data_string_t *,
-				      omapi_value_t **); 
+				      omapi_value_t **);
 isc_result_t omapi_generic_destroy (omapi_object_t *, const char *, int);
 isc_result_t omapi_generic_signal_handler (omapi_object_t *,
 					   const char *, va_list);
@@ -422,7 +426,7 @@ isc_result_t omapi_message_set_value  (omapi_object_t *, omapi_object_t *,
 				       omapi_typed_data_t *);
 isc_result_t omapi_message_get_value (omapi_object_t *, omapi_object_t *,
 				      omapi_data_string_t *,
-				      omapi_value_t **); 
+				      omapi_value_t **);
 isc_result_t omapi_message_destroy (omapi_object_t *, const char *, int);
 isc_result_t omapi_message_signal_handler (omapi_object_t *,
 					   const char *, va_list);
@@ -444,7 +448,7 @@ isc_result_t omapi_auth_key_lookup (omapi_object_t **,
 				    omapi_object_t *);
 isc_result_t omapi_auth_key_get_value (omapi_object_t *, omapi_object_t *,
 				       omapi_data_string_t *,
-				       omapi_value_t **); 
+				       omapi_value_t **);
 isc_result_t omapi_auth_key_stuff_values (omapi_object_t *,
 					  omapi_object_t *,
 					  omapi_object_t *);
@@ -516,9 +520,9 @@ isc_result_t omapi_set_string_value (omapi_object_t *, omapi_object_t *,
 				     const char *, const char *);
 isc_result_t omapi_get_value (omapi_object_t *, omapi_object_t *,
 			      omapi_data_string_t *,
-			      omapi_value_t **); 
+			      omapi_value_t **);
 isc_result_t omapi_get_value_str (omapi_object_t *, omapi_object_t *,
-				  const char *, omapi_value_t **); 
+				  const char *, omapi_value_t **);
 isc_result_t omapi_stuff_values (omapi_object_t *,
 				 omapi_object_t *,
 				 omapi_object_t *);

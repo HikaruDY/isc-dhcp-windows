@@ -4,13 +4,12 @@
    responses. */
 
 /*
- * Copyright (c) 2011,2013,2014 by Internet Systems Consortium, Inc. ("ISC")
- * Copyright (c) 2004,2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -21,8 +20,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -86,7 +85,7 @@ void icmp_startup (routep, handler)
 		proto = getprotobyname ("icmp");
 		if (proto)
 			protocol = proto -> p_proto;
-		
+
 		/* Get a raw socket for the ICMP protocol. */
 		icmp_state -> socket = socket (AF_INET, SOCK_RAW, protocol);
 		if (icmp_state -> socket < 0) {

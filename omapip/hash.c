@@ -3,12 +3,12 @@
    Routines for manipulating hash tables... */
 
 /*
- * Copyright (c) 2004-2016 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -19,8 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -149,7 +149,7 @@ void relinquish_hash_bucket_hunks ()
 		if (!n)
 			p = &c -> next;
 	}
-		
+
 	for (c = hash_bucket_hunks; c; c = n) {
 		n = c -> next;
 		if (c -> len != 126) {
@@ -300,7 +300,7 @@ do_id_hash(const void *name, unsigned len, unsigned size)
 	 * The switch handles our starting conditions, then we hash the
 	 * remaining bytes in groups of 3
 	 */
-	   
+
 	switch (len % 3) {
 	case 0:
 		break;
@@ -386,7 +386,7 @@ hash_report(struct hash_table *table)
 	    maxlen > 2147483647)
 		return (unsigned char *) "Report out of range for display.";
 
-	sprintf((char *)retbuf, 
+	sprintf((char *)retbuf,
 		"Contents/Size (%%): %u/%u (%u%%). Min/max: %u/%u",
 		contents, table->hash_count, pct, minlen, maxlen);
 
@@ -536,7 +536,7 @@ int casecmp (const void *v1, const void *v2, size_t len)
 	size_t i;
 	const unsigned char *s = v1;
 	const unsigned char *t = v2;
-	
+
 	for (i = 0; i < len; i++)
 	{
 		int c1, c2;

@@ -3,12 +3,12 @@
    BSD socket interface code... */
 
 /*
- * Copyright (c) 2004-2017 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -19,8 +19,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
@@ -30,16 +30,16 @@
  * This sockopt allows a socket to be bound to a particular interface,
  * thus enabling the use of DHCPD on a multihomed host.
  * If SO_BINDTODEVICE is defined in your system header files, the use of
- * this sockopt will be automatically enabled. 
+ * this sockopt will be automatically enabled.
  * I have implemented it under Linux; other systems should be doable also.
  */
 
 #include "dhcpd.h"
+#include <isc/util.h>
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <sys/uio.h>
-#include <signal.h>
 
 #if defined(sun) && defined(USE_V4_PKTINFO)
 #include <sys/sysmacros.h>
@@ -65,6 +65,10 @@
 static int no_global_v6_socket = 0;
 static unsigned int global_v6_socket_references = 0;
 static int global_v6_socket = -1;
+#if defined(RELAY_PORT)
+static unsigned int relay_port_v6_socket_references = 0;
+static int relay_port_v6_socket = -1;
+#endif
 
 static void if_register_multicast(struct interface_info *info);
 #endif
@@ -130,6 +134,10 @@ if_register_socket(struct interface_info *info, int family,
 	int sock;
 	int flag;
 	int domain;
+#ifdef DHCPv6
+	struct sockaddr_in6 *addr6;
+#endif
+	struct sockaddr_in *addr;
 
 	/* INSIST((family == AF_INET) || (family == AF_INET6)); */
 
@@ -142,37 +150,53 @@ if_register_socket(struct interface_info *info, int family,
 	once = 1;
 #endif
 
-	/* 
+	/*
 	 * Set up the address we're going to bind to, depending on the
-	 * address family. 
-	 */ 
+	 * address family.
+	 */
 	memset(&name, 0, sizeof(name));
+	switch (family) {
 #ifdef DHCPv6
-	if (family == AF_INET6) {
-		struct sockaddr_in6 *addr = (struct sockaddr_in6 *)&name; 
-		addr->sin6_family = AF_INET6;
-		addr->sin6_port = local_port;
+	case AF_INET6:
+		addr6 = (struct sockaddr_in6 *)&name;
+		addr6->sin6_family = AF_INET6;
+		addr6->sin6_port = local_port;
+#if defined(RELAY_PORT)
+		if (relay_port &&
+		    ((info->flags & INTERFACE_STREAMS) == INTERFACE_UPSTREAM))
+			addr6->sin6_port = relay_port;
+#endif
+		/* A server feature */
+		if (bind_local_address6) {
+			memcpy(&addr6->sin6_addr,
+			       &local_address6,
+			       sizeof(addr6->sin6_addr));
+		}
+		/* A client feature */
 		if (linklocal6) {
-			memcpy(&addr->sin6_addr,
+			memcpy(&addr6->sin6_addr,
 			       linklocal6,
-			       sizeof(addr->sin6_addr));
-			addr->sin6_scope_id =  if_nametoindex(info->name);
+			       sizeof(addr6->sin6_addr));
+		}
+		if (IN6_IS_ADDR_LINKLOCAL(&addr6->sin6_addr)) {
+			addr6->sin6_scope_id = if_nametoindex(info->name);
 		}
 #ifdef HAVE_SA_LEN
-		addr->sin6_len = sizeof(*addr);
+		addr6->sin6_len = sizeof(*addr6);
 #endif
-		name_len = sizeof(*addr);
+		name_len = sizeof(*addr6);
 		domain = PF_INET6;
 		if ((info->flags & INTERFACE_STREAMS) == INTERFACE_UPSTREAM) {
 			*do_multicast = 0;
 		}
-	} else { 
-#else 
-	{
+		break;
 #endif /* DHCPv6 */
-		struct sockaddr_in *addr = (struct sockaddr_in *)&name; 
+
+	case AF_INET:
+	default:
+		addr = (struct sockaddr_in *)&name;
 		addr->sin_family = AF_INET;
-		addr->sin_port = local_port;
+		addr->sin_port = relay_port ? relay_port : local_port;
 		memcpy(&addr->sin_addr,
 		       &local_address,
 		       sizeof(addr->sin_addr));
@@ -181,12 +205,13 @@ if_register_socket(struct interface_info *info, int family,
 #endif
 		name_len = sizeof(*addr);
 		domain = PF_INET;
+		break;
 	}
 
 	/* Make a socket... */
 	sock = socket(domain, SOCK_DGRAM, IPPROTO_UDP);
 	if (sock < 0) {
-		log_fatal("Can't create dhcp socket: %m");
+		log_fatal("Can't create dhcp socket for %s: %m", info->name);
 	}
 
 	/* Set the REUSEADDR option so that we don't fail to start if
@@ -194,7 +219,8 @@ if_register_socket(struct interface_info *info, int family,
 	flag = 1;
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
 			(char *)&flag, sizeof(flag)) < 0) {
-		log_fatal("Can't set SO_REUSEADDR option on dhcp socket: %m");
+		log_fatal("Can't set SO_REUSEADDR on dhcp socket for"
+			  " %s: %m", info->name);
 	}
 
 	/* Set the BROADCAST option so that we can broadcast DHCP responses.
@@ -203,7 +229,8 @@ if_register_socket(struct interface_info *info, int family,
 	if (info->ifp &&
 	    (setsockopt(sock, SOL_SOCKET, SO_BROADCAST,
 			 (char *)&flag, sizeof(flag)) < 0)) {
-		log_fatal("Can't set SO_BROADCAST option on dhcp socket: %m");
+		log_fatal("Can't set SO_BROADCAST on dhcp socket for"
+			  " %s: %m", info->name);
 	}
 
 #if defined(DHCPv6) && defined(SO_REUSEPORT)
@@ -216,13 +243,13 @@ if_register_socket(struct interface_info *info, int family,
 	 * RedHat defines SO_REUSEPORT with a kernel which does not support
 	 * it and returns ENOPROTOOPT so in this case ignore the error.
 	 */
-	if (local_family == AF_INET6) {
+	if ((local_family == AF_INET6) && *do_multicast) {
 		flag = 1;
 		if ((setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
 			        (char *)&flag, sizeof(flag)) < 0) &&
 		    (errno != ENOPROTOOPT)) {
-			log_fatal("Can't set SO_REUSEPORT option on dhcp "
-				  "socket: %m");
+			log_fatal("Can't set SO_REUSEPORT on dhcp socket for"
+				  " %s: %m", info->name);
 		}
 	}
 #endif
@@ -241,8 +268,9 @@ if_register_socket(struct interface_info *info, int family,
 	/* Bind this socket to this interface. */
 	if ((local_family != AF_INET6) && (info->ifp != NULL) &&
 	    setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE,
-			(char *)(info -> ifp), sizeof(*(info -> ifp))) < 0) {
-		log_fatal("setsockopt: SO_BINDTODEVICE: %m");
+		       (char *)(info -> ifp), sizeof(*(info -> ifp))) < 0) {
+		log_fatal("Can't set SO_BINDTODEVICE on dhcp socket for"
+			  " %s : %m", (char *)(info->ifp));
 	}
 #endif
 
@@ -257,7 +285,8 @@ if_register_socket(struct interface_info *info, int family,
         if (info->address_count &&
 	    setsockopt(sock, IPPROTO_IP, IP_BROADCAST_IF, &info->addresses[0],
 		       sizeof(info->addresses[0])) < 0)
-		log_fatal("Can't set IP_BROADCAST_IF on dhcp socket: %m");
+		log_fatal("Can't set IP_BROADCAST_IF on dhcp socket for"
+			  " %s: %m", info->name);
 #endif
 
 #if defined(IP_PKTINFO) && defined(IP_RECVPKTINFO)  && defined(USE_V4_PKTINFO)
@@ -267,16 +296,17 @@ if_register_socket(struct interface_info *info, int family,
 	 */
 	if (family == AF_INET) {
 		int on = 1;
-		if (setsockopt(sock, IPPROTO_IP, IP_RECVPKTINFO, 
+		if (setsockopt(sock, IPPROTO_IP, IP_RECVPKTINFO,
 		               &on, sizeof(on)) != 0) {
-			log_fatal("setsockopt: IPV_RECVPKTINFO: %m");
+			log_fatal("Can't set IP_RECVPTKINFO on dhcp socket for"
+				  " %s: %m", info->name);
 		}
 	}
 #endif
 
 #ifdef DHCPv6
 	/*
-	 * If we turn on IPV6_PKTINFO, we will be able to receive 
+	 * If we turn on IPV6_PKTINFO, we will be able to receive
 	 * additional information, such as the destination IP address.
 	 * We need this to spot unicast packets.
 	 */
@@ -284,15 +314,17 @@ if_register_socket(struct interface_info *info, int family,
 		int on = 1;
 #ifdef IPV6_RECVPKTINFO
 		/* RFC3542 */
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, 
+		if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO,
 		               &on, sizeof(on)) != 0) {
-			log_fatal("setsockopt: IPV6_RECVPKTINFO: %m");
+			log_fatal("setsockopt: IPV6_RECVPKTINFO for %s: %m",
+				  info->name);
 		}
 #else
 		/* RFC2292 */
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO, 
+		if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO,
 		               &on, sizeof(on)) != 0) {
-			log_fatal("setsockopt: IPV6_PKTINFO: %m");
+			log_fatal("setsockopt: IPV6_PKTINFO for %s: %m",
+				  info->name);
 		}
 #endif
 	}
@@ -306,7 +338,8 @@ if_register_socket(struct interface_info *info, int family,
 void set_multicast_hop_limit(struct interface_info* info, int hop_limit) {
 	if (setsockopt(info->wfdesc, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
 		       &hop_limit, sizeof(int)) < 0) {
-		log_fatal("setMulticaseHopLimit: IPV6_MULTICAST_HOPS: %m");
+		log_fatal("setsockopt: IPV6_MULTICAST_HOPS for %s: %m",
+			  info->name);
 	}
 
 	log_debug("Setting hop count limit to %d for interface %s",
@@ -378,7 +411,7 @@ void if_register_receive (info)
 				  MDL);
 		}
 	}
-		
+
 	info->rfdesc = global_v4_socket;
 	global_v4_socket_references++;
 #else
@@ -429,7 +462,7 @@ void if_deregister_receive (info)
 #endif /* USE_SOCKET_RECEIVE */
 
 
-#ifdef DHCPv6 
+#ifdef DHCPv6
 /*
  * This function joins the interface to DHCPv6 multicast groups so we will
  * receive multicast messages.
@@ -441,13 +474,14 @@ if_register_multicast(struct interface_info *info) {
 
 	if (inet_pton(AF_INET6, All_DHCP_Relay_Agents_and_Servers,
 		      &mreq.ipv6mr_multiaddr) <= 0) {
-		log_fatal("inet_pton: unable to convert '%s'", 
+		log_fatal("inet_pton: unable to convert '%s'",
 			  All_DHCP_Relay_Agents_and_Servers);
 	}
 	mreq.ipv6mr_interface = if_nametoindex(info->name);
-	if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, 
+	if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP,
 		       &mreq, sizeof(mreq)) < 0) {
-		log_fatal("setsockopt: IPV6_JOIN_GROUP: %m");
+		log_fatal("setsockopt: IPV6_JOIN_GROUP for %s: %m",
+			  info->name);
 	}
 
 	/*
@@ -460,13 +494,14 @@ if_register_multicast(struct interface_info *info) {
 	if ((info->flags & INTERFACE_STREAMS) == 0) {
 		if (inet_pton(AF_INET6, All_DHCP_Servers,
 			      &mreq.ipv6mr_multiaddr) <= 0) {
-			log_fatal("inet_pton: unable to convert '%s'", 
+			log_fatal("inet_pton: unable to convert '%s'",
 				  All_DHCP_Servers);
 		}
 		mreq.ipv6mr_interface = if_nametoindex(info->name);
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, 
+		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP,
 			       &mreq, sizeof(mreq)) < 0) {
-			log_fatal("setsockopt: IPV6_JOIN_GROUP: %m");
+			log_fatal("setsockopt: IPV6_JOIN_GROUP for %s: %m",
+				  info->name);
 		}
 	}
 }
@@ -480,6 +515,10 @@ if_register6(struct interface_info *info, int do_multicast) {
 		log_fatal("Impossible condition at %s:%d", MDL);
 	}
 
+#if defined(RELAY_PORT)
+	if (!relay_port ||
+	    ((info->flags & INTERFACE_STREAMS) == INTERFACE_DOWNSTREAM)) {
+#endif
 	if (global_v6_socket_references == 0) {
 		global_v6_socket = if_register_socket(info, AF_INET6,
 						      &req_multi, NULL);
@@ -489,14 +528,51 @@ if_register6(struct interface_info *info, int do_multicast) {
 			 * create a socket, this is just a sanity check.
 			 */
 			log_fatal("Impossible condition at %s:%d", MDL);
+		} else if (bind_local_address6) {
+			char addr6_str[INET6_ADDRSTRLEN];
+
+			if (inet_ntop(AF_INET6,
+				      &local_address6,
+				      addr6_str,
+				      sizeof(addr6_str)) == NULL) {
+				log_fatal("inet_ntop: unable to convert "
+					  "local-address6");
+			}
+			log_info("Bound to [%s]:%d",
+				 addr6_str,
+				 (int) ntohs(local_port));
 		} else {
-			log_info("Bound to *:%d", ntohs(local_port));
+			log_info("Bound to *:%d", (int) ntohs(local_port));
 		}
 	}
-		
+
 	info->rfdesc = global_v6_socket;
 	info->wfdesc = global_v6_socket;
 	global_v6_socket_references++;
+
+#if defined(RELAY_PORT)
+	} else {
+	/*
+	 * If relay port is defined, we need to register one
+	 * IPv6 UPD socket to handle upstream server or relay agent
+	 * with a non-547 UDP local port.
+	 */
+	if ((relay_port_v6_socket_references == 0) &&
+	    ((info->flags & INTERFACE_STREAMS) == INTERFACE_UPSTREAM)) {
+		relay_port_v6_socket = if_register_socket(info, AF_INET6,
+							  &req_multi, NULL);
+		if (relay_port_v6_socket < 0) {
+			log_fatal("Impossible condition at %s:%d", MDL);
+		} else {
+			log_info("Bound to relay port *:%d",
+				 (int) ntohs(relay_port));
+		}
+	}
+	info->rfdesc = relay_port_v6_socket;
+	info->wfdesc = relay_port_v6_socket;
+	relay_port_v6_socket_references++;
+	}
+#endif
 
 	if (req_multi)
 		if_register_multicast(info);
@@ -506,7 +582,7 @@ if_register6(struct interface_info *info, int do_multicast) {
 	if (!quiet_interface_discovery) {
 		if (info->shared_network != NULL) {
 			log_info("Listening on Socket/%d/%s/%s",
-				 global_v6_socket, info->name, 
+				 global_v6_socket, info->name,
 				 info->shared_network->name);
 			log_info("Sending on   Socket/%d/%s/%s",
 				 global_v6_socket, info->name,
@@ -534,7 +610,7 @@ if_register_linklocal6(struct interface_info *info) {
 	if (global_v6_socket >= 0) {
 		log_fatal("Impossible condition at %s:%d", MDL);
 	}
-		
+
 	no_global_v6_socket = 1;
 
 	/* get the (?) link-local address */
@@ -562,7 +638,7 @@ if_register_linklocal6(struct interface_info *info) {
 	if (!quiet_interface_discovery) {
 		if (info->shared_network != NULL) {
 			log_info("Listening on Socket/%d/%s/%s",
-				 global_v6_socket, info->name, 
+				 global_v6_socket, info->name,
 				 info->shared_network->name);
 			log_info("Sending on   Socket/%d/%s/%s",
 				 global_v6_socket, info->name,
@@ -574,7 +650,7 @@ if_register_linklocal6(struct interface_info *info) {
 	}
 }
 
-void 
+void
 if_deregister6(struct interface_info *info) {
 	/* client case */
 	if (no_global_v6_socket) {
@@ -588,6 +664,16 @@ if_deregister6(struct interface_info *info) {
 		global_v6_socket_references--;
 		info->rfdesc = -1;
 		info->wfdesc = -1;
+#if defined(RELAY_PORT)
+	} else if (relay_port &&
+		   (info->rfdesc == relay_port_v6_socket) &&
+		   (info->wfdesc == relay_port_v6_socket) &&
+		   (relay_port_v6_socket_references > 0)) {
+		/* Dereference the relay port v6 socket. */
+		relay_port_v6_socket_references--;
+		info->rfdesc = -1;
+		info->wfdesc = -1;
+#endif
 	} else {
 		log_fatal("Impossible condition at %s:%d", MDL);
 	}
@@ -604,12 +690,23 @@ if_deregister6(struct interface_info *info) {
 		}
 	}
 
-	if (!no_global_v6_socket &&
-	    (global_v6_socket_references == 0)) {
-		close(global_v6_socket);
-		global_v6_socket = -1;
+	if (!no_global_v6_socket) {
+		if (global_v6_socket_references == 0) {
+			close(global_v6_socket);
+			global_v6_socket = -1;
 
-		log_info("Unbound from *:%d", ntohs(local_port));
+			log_info("Unbound from *:%d",
+				 (int) ntohs(local_port));
+		}
+#if defined(RELAY_PORT)
+		if (relay_port && (relay_port_v6_socket_references == 0)) {
+			close(relay_port_v6_socket);
+			relay_port_v6_socket = -1;
+
+			log_info("Unbound from relay port *:%d",
+				 (int) ntohs(relay_port));
+		}
+#endif
 	}
 }
 #endif /* DHCPv6 */
@@ -637,8 +734,9 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 			pktinfo.ipi_ifindex = interface->ifp->ifr_index;
 			if (setsockopt(interface->wfdesc, IPPROTO_IP,
 				       IP_PKTINFO, (char *)&pktinfo,
-				       sizeof(pktinfo)) < 0) 
-				log_fatal("setsockopt: IP_PKTINFO: %m");
+				       sizeof(pktinfo)) < 0)
+				log_fatal("setsockopt: IP_PKTINFO for %s: %m",
+					  (char*)(interface->ifp));
 		}
 #endif
 		result = sendto (interface -> wfdesc, (char *)raw, len, 0,
@@ -663,7 +761,7 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 
 #ifdef DHCPv6
 /*
- * Solaris 9 is missing the CMSG_LEN and CMSG_SPACE macros, so we will 
+ * Solaris 9 is missing the CMSG_LEN and CMSG_SPACE macros, so we will
  * synthesize them (based on the BIND 9 technique).
  */
 
@@ -733,16 +831,16 @@ allocate_cmsg_cbuf(void) {
 #endif /* DHCPv6, IP_PKTINFO ... */
 
 #ifdef DHCPv6
-/* 
- * For both send_packet6() and receive_packet6() we need to use the 
+/*
+ * For both send_packet6() and receive_packet6() we need to use the
  * sendmsg()/recvmsg() functions rather than the simpler send()/recv()
  * functions.
  *
  * In the case of send_packet6(), we need to do this in order to insure
- * that the reply packet leaves on the same interface that it arrived 
- * on. 
+ * that the reply packet leaves on the same interface that it arrived
+ * on.
  *
- * In the case of receive_packet6(), we need to do this in order to 
+ * In the case of receive_packet6(), we need to do this in order to
  * get the IP address the packet was sent to. This is used to identify
  * whether a packet is multicast or unicast.
  *
@@ -790,12 +888,18 @@ ssize_t send_packet6(struct interface_info *interface,
 	m.msg_name = &dst;
 	m.msg_namelen = sizeof(dst);
 	ifindex = if_nametoindex(interface->name);
+
+// Per OpenBSD patch-common_socket_c,v 1.7 2018/03/06 08:37:39 sthen Exp
+// always set the scope id.  We'll leave the test for no global socket
+// in place for all others.
+#ifndef __OpenBSD__
 	if (no_global_v6_socket)
+#endif
 		dst.sin6_scope_id = ifindex;
 
 	/*
-	 * Set the data buffer we're sending. (Using this wacky 
-	 * "scatter-gather" stuff... we only have a single chunk 
+	 * Set the data buffer we're sending. (Using this wacky
+	 * "scatter-gather" stuff... we only have a single chunk
 	 * of data to send, so we declare a single vector entry.)
 	 */
 	v.iov_base = (char *)raw;
@@ -805,11 +909,11 @@ ssize_t send_packet6(struct interface_info *interface,
 
 	/*
 	 * Setting the interface is a bit more involved.
-	 * 
-	 * We have to create a "control message", and set that to 
+	 *
+	 * We have to create a "control message", and set that to
 	 * define the IPv6 packet information. We could set the
 	 * source address if we wanted, but we can safely let the
-	 * kernel decide what that should be. 
+	 * kernel decide what that should be.
 	 */
 	m.msg_control = control_buf;
 	m.msg_controllen = control_buf_len;
@@ -820,6 +924,7 @@ ssize_t send_packet6(struct interface_info *interface,
 	cmsg->cmsg_len = CMSG_LEN(sizeof(*pktinfo));
 	pktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsg);
 	memset(pktinfo, 0, sizeof(*pktinfo));
+	pktinfo->ipi6_addr = local_address6;
 	pktinfo->ipi6_ifindex = ifindex;
 
 	result = sendmsg(interface->wfdesc, &m, 0);
@@ -888,7 +993,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	m.msg_namelen = sizeof(*from);
 
 	/*
-	 * Set the data buffer we're receiving. (Using this wacky 
+	 * Set the data buffer we're receiving. (Using this wacky
 	 * "scatter-gather" stuff... but we that doesn't really make
 	 * sense for us, so we use a single vector entry.)
 	 */
@@ -900,8 +1005,8 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	/*
 	 * Getting the interface is a bit more involved.
 	 *
-	 * We set up some space for a "control message". We have 
-	 * previously asked the kernel to give us packet 
+	 * We set up some space for a "control message". We have
+	 * previously asked the kernel to give us packet
 	 * information (when we initialized the interface), so we
 	 * should get the interface index from that.
 	 */
@@ -913,19 +1018,19 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 	if (result >= 0) {
 		/*
 		 * If we did read successfully, then we need to loop
-		 * through the control messages we received and 
+		 * through the control messages we received and
 		 * find the one with our inteface index.
 		 */
 		cmsg = CMSG_FIRSTHDR(&m);
 		while (cmsg != NULL) {
-			if ((cmsg->cmsg_level == IPPROTO_IP) && 
+			if ((cmsg->cmsg_level == IPPROTO_IP) &&
 			    (cmsg->cmsg_type == IP_PKTINFO)) {
 				pktinfo = (struct in_pktinfo *)CMSG_DATA(cmsg);
 				ifindex = pktinfo->ipi_ifindex;
 				/*
-				 * We pass the ifindex back to the caller 
+				 * We pass the ifindex back to the caller
 				 * using the unused hfrom parameter avoiding
-				 * interface changes between sockets and 
+				 * interface changes between sockets and
 				 * the discover code.
 				 */
 				memcpy(hfrom->hbuf, &ifindex, sizeof(ifindex));
@@ -957,9 +1062,9 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 #endif /* USE_SOCKET_RECEIVE */
 
 #ifdef DHCPv6
-ssize_t 
-receive_packet6(struct interface_info *interface, 
-		unsigned char *buf, size_t len, 
+ssize_t
+receive_packet6(struct interface_info *interface,
+		unsigned char *buf, size_t len,
 		struct sockaddr_in6 *from, struct in6_addr *to_addr,
 		unsigned int *if_idx)
 {
@@ -995,7 +1100,7 @@ receive_packet6(struct interface_info *interface,
 	m.msg_namelen = sizeof(*from);
 
 	/*
-	 * Set the data buffer we're receiving. (Using this wacky 
+	 * Set the data buffer we're receiving. (Using this wacky
 	 * "scatter-gather" stuff... but we that doesn't really make
 	 * sense for us, so we use a single vector entry.)
 	 */
@@ -1007,8 +1112,8 @@ receive_packet6(struct interface_info *interface,
 	/*
 	 * Getting the interface is a bit more involved.
 	 *
-	 * We set up some space for a "control message". We have 
-	 * previously asked the kernel to give us packet 
+	 * We set up some space for a "control message". We have
+	 * previously asked the kernel to give us packet
 	 * information (when we initialized the interface), so we
 	 * should get the destination address from that.
 	 */
@@ -1020,12 +1125,12 @@ receive_packet6(struct interface_info *interface,
 	if (result >= 0) {
 		/*
 		 * If we did read successfully, then we need to loop
-		 * through the control messages we received and 
+		 * through the control messages we received and
 		 * find the one with our destination address.
 		 */
 		cmsg = CMSG_FIRSTHDR(&m);
 		while (cmsg != NULL) {
-			if ((cmsg->cmsg_level == IPPROTO_IPV6) && 
+			if ((cmsg->cmsg_level == IPPROTO_IPV6) &&
 			    (cmsg->cmsg_type == IPV6_PKTINFO)) {
 				pktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsg);
 				*to_addr = pktinfo->ipi6_addr;
@@ -1061,7 +1166,7 @@ isc_result_t fallback_discard (object)
 	struct interface_info *interface;
 
 	if (object -> type != dhcp_type_interface)
-		return ISC_R_INVALIDARG;
+		return DHCP_R_INVALIDARG;
 	interface = (struct interface_info *)object;
 
 	status = recvfrom (interface -> wfdesc, buf, sizeof buf, 0,
@@ -1125,7 +1230,7 @@ void maybe_setup_fallback ()
 		      (fbi -> shared_network ? "/" : ""),
 		      (fbi -> shared_network ?
 		       fbi -> shared_network -> name : ""));
-	
+
 		status = omapi_register_io_object ((omapi_object_t *)fbi,
 						   if_readsocket, 0,
 						   fallback_discard, 0, 0);
@@ -1219,26 +1324,3 @@ get_hw_addr(const char *name, struct hardware *hw) {
 #endif /* defined(sun) */
 
 #endif /* USE_SOCKET_SEND */
-
-/*
- * Code to set a handler for signals.  This
- * exists to allow us to ignore SIGPIPE signals
- * but could be used for other purposes in the
- * future.
- */
-
-isc_result_t
-dhcp_handle_signal(int sig, void (*handler)(int)) {
-	struct sigaction sa;
-
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = handler;
-
-	if (sigfillset(&sa.sa_mask) != 0 ||
-	    sigaction(sig, &sa, NULL) < 0) {
-		log_error("Unable to set up signal handler for %d, %m", sig);
-		return (ISC_R_UNEXPECTED);
-	}
-
-	return (ISC_R_SUCCESS);
-}

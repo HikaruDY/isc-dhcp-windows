@@ -3,12 +3,12 @@
    Support for executable statements. */
 
 /*
- * Copyright (c) 2004-2016 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2022 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1998-2003 by Internet Software Consortium
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -19,20 +19,22 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *   Internet Systems Consortium, Inc.
- *   950 Charter Street
- *   Redwood City, CA 94063
+ *   PO Box 360
+ *   Newmarket, NH 03857 USA
  *   <info@isc.org>
  *   https://www.isc.org/
  *
  */
 
 #include "dhcpd.h"
+#include <isc/util.h>
 #include <omapip/omapip_p.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
 int execute_statements (result, packet, lease, client_state,
-			in_options, out_options, scope, statements)
+			in_options, out_options, scope, statements,
+			on_star)
 	struct binding_value **result;
 	struct packet *packet;
 	struct lease *lease;
@@ -41,6 +43,7 @@ int execute_statements (result, packet, lease, client_state,
 	struct option_state *out_options;
 	struct binding_scope **scope;
 	struct executable_statement *statements;
+	struct on_star *on_star;
 {
 	struct executable_statement *r, *e, *next;
 	int rc;
@@ -52,14 +55,14 @@ int execute_statements (result, packet, lease, client_state,
 	if (!statements)
 		return 1;
 
-	r = (struct executable_statement *)0;
-	next = (struct executable_statement *)0;
-	e = (struct executable_statement *)0;
+	r = NULL;
+	next = NULL;
+	e = NULL;
 	executable_statement_reference (&r, statements, MDL);
 	while (r && !(result && *result)) {
-		if (r -> next)
-			executable_statement_reference (&next, r -> next, MDL);
-		switch (r -> op) {
+		if (r->next)
+			executable_statement_reference (&next, r->next, MDL);
+		switch (r->op) {
 		      case statements_statement:
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: statements");
@@ -67,7 +70,8 @@ int execute_statements (result, packet, lease, client_state,
 			status = execute_statements (result, packet, lease,
 						     client_state, in_options,
 						     out_options, scope,
-						     r -> data.statements);
+						     r->data.statements,
+						     on_star);
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: statements returns %d", status);
 #endif
@@ -75,46 +79,53 @@ int execute_statements (result, packet, lease, client_state,
 				executable_statement_dereference (&r, MDL);
 				return 0;
 			}
-
 			break;
 
 		      case on_statement:
-			if (lease) {
-			    if (r -> data.on.evtypes & ON_EXPIRY) {
+			/*
+			 * if we haven't been passed an on_star block but
+			 * do have a lease, use the one from the lease
+			 * This handles the previous v4 calls.
+			 */
+			if ((on_star == NULL) && (lease != NULL))
+			    on_star = &lease->on_star;
+
+			if (on_star != NULL) {
+			    if (r->data.on.evtypes & ON_EXPIRY) {
 #if defined (DEBUG_EXPRESSIONS)
 				    log_debug ("exec: on expiry");
 #endif
-				if (lease -> on_expiry)
+				if (on_star->on_expiry)
 					executable_statement_dereference
-						(&lease -> on_expiry, MDL);
-				if (r -> data.on.statements)
+						(&on_star->on_expiry, MDL);
+				if (r->data.on.statements)
 					executable_statement_reference
-						(&lease -> on_expiry,
-						 r -> data.on.statements, MDL);
+						(&on_star->on_expiry,
+						 r->data.on.statements, MDL);
 			    }
-			    if (r -> data.on.evtypes & ON_RELEASE) {
+			    if (r->data.on.evtypes & ON_RELEASE) {
 #if defined (DEBUG_EXPRESSIONS)
 				    log_debug ("exec: on release");
 #endif
-				if (lease -> on_release)
+				if (on_star->on_release)
 					executable_statement_dereference
-						(&lease -> on_release, MDL);
-				if (r -> data.on.statements)
+						(&on_star->on_release, MDL);
+				if (r->data.on.statements)
 					executable_statement_reference
-						(&lease -> on_release,
-						 r -> data.on.statements, MDL);
+						(&on_star->on_release,
+						 r->data.on.statements, MDL);
 			    }
-			    if (r -> data.on.evtypes & ON_COMMIT) {
+			    if (r->data.on.evtypes & ON_COMMIT) {
 #if defined (DEBUG_EXPRESSIONS)
 				    log_debug ("exec: on commit");
 #endif
-				if (lease -> on_commit)
+				if (on_star->on_commit)
 					executable_statement_dereference
-						(&lease -> on_commit, MDL);
-				if (r -> data.on.statements)
+						(&on_star->on_commit, MDL);
+				if (r->data.on.statements)
 					executable_statement_reference
-						(&lease -> on_commit,
-						 r -> data.on.statements, MDL);
+						(&on_star->on_commit,
+						 r->data.on.statements, MDL);
 			    }
 			}
 			break;
@@ -126,15 +137,16 @@ int execute_statements (result, packet, lease, client_state,
 			status = (find_matching_case
 				  (&e, packet, lease, client_state,
 				   in_options, out_options, scope,
-				   r -> data.s_switch.expr,
-				   r -> data.s_switch.statements));
+				   r->data.s_switch.expr,
+				   r->data.s_switch.statements));
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: switch: case %lx", (unsigned long)e);
 #endif
 			if (status) {
 				if (!(execute_statements
 				      (result, packet, lease, client_state,
-				       in_options, out_options, scope, e))) {
+				       in_options, out_options, scope, e,
+				       on_star))) {
 					executable_statement_dereference
 						(&e, MDL);
 					executable_statement_dereference
@@ -154,8 +166,8 @@ int execute_statements (result, packet, lease, client_state,
 			status = (evaluate_boolean_expression
 				  (&rc, packet,
 				   lease, client_state, in_options,
-				   out_options, scope, r -> data.ie.expr));
-			
+				   out_options, scope, r->data.ie.expr));
+
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: if %s", (status
 					      ? (rc ? "true" : "false")
@@ -167,7 +179,8 @@ int execute_statements (result, packet, lease, client_state,
 			if (!execute_statements
 			    (result, packet, lease, client_state,
 			     in_options, out_options, scope,
-			     rc ? r -> data.ie.tc : r -> data.ie.fc)) {
+			     rc ? r->data.ie.tc : r->data.ie.fc,
+			     on_star)) {
 				executable_statement_dereference (&r, MDL);
 				return 0;
 			}
@@ -175,9 +188,8 @@ int execute_statements (result, packet, lease, client_state,
 
 		      case eval_statement:
 			status = evaluate_expression
-				((struct binding_value **)0,
-				 packet, lease, client_state, in_options,
-				 out_options, scope, r -> data.eval, MDL);
+				(NULL, packet, lease, client_state, in_options,
+				 out_options, scope, r->data.eval, MDL);
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: evaluate: %s",
 				   (status ? "succeeded" : "failed"));
@@ -207,7 +219,7 @@ int execute_statements (result, packet, lease, client_state,
                         }
 
                         log_debug("execute_statement argv[0] = %s", argv[0]);
- 
+
                         for (i = 1, expr = r->data.execute.arglist; expr;
                              expr = expr->data.arg.next, i++) {
                                 memset (&ds, 0, sizeof(ds));
@@ -281,11 +293,11 @@ int execute_statements (result, packet, lease, client_state,
 
 		      case add_statement:
 #if defined (DEBUG_EXPRESSIONS)
-			log_debug ("exec: add %s", (r -> data.add -> name
-					       ? r -> data.add -> name
+			log_debug ("exec: add %s", (r->data.add->name
+					       ? r->data.add->name
 					       : "<unnamed class>"));
 #endif
-			classify (packet, r -> data.add);
+			classify (packet, r->data.add);
 			break;
 
 		      case break_statement:
@@ -299,35 +311,35 @@ int execute_statements (result, packet, lease, client_state,
 		      case send_option_statement:
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: %s option %s.%s",
-			      (r -> op == supersede_option_statement
+			      (r->op == supersede_option_statement
 			       ? "supersede" : "send"),
-			      r -> data.option -> option -> universe -> name,
-			      r -> data.option -> option -> name);
+			      r->data.option->option->universe->name,
+			      r->data.option->option->name);
 			goto option_statement;
 #endif
 		      case default_option_statement:
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: default option %s.%s",
-			      r -> data.option -> option -> universe -> name,
-			      r -> data.option -> option -> name);
+			      r->data.option->option->universe->name,
+			      r->data.option->option->name);
 			goto option_statement;
 #endif
 		      case append_option_statement:
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: append option %s.%s",
-			      r -> data.option -> option -> universe -> name,
-			      r -> data.option -> option -> name);
+			      r->data.option->option->universe->name,
+			      r->data.option->option->name);
 			goto option_statement;
 #endif
 		      case prepend_option_statement:
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: prepend option %s.%s",
-			      r -> data.option -> option -> universe -> name,
-			      r -> data.option -> option -> name);
+			      r->data.option->option->universe->name,
+			      r->data.option->option->name);
 		      option_statement:
 #endif
-			set_option (r -> data.option -> option -> universe,
-				    out_options, r -> data.option, r -> op);
+			set_option (r->data.option->option->universe,
+				    out_options, r->data.option, r->op);
 			break;
 
 		      case set_statement:
@@ -408,16 +420,16 @@ int execute_statements (result, packet, lease, client_state,
 		      case unset_statement:
 			if (!scope || !*scope)
 				break;
-			binding = find_binding (*scope, r -> data.unset);
+			binding = find_binding (*scope, r->data.unset);
 			if (binding) {
-				if (binding -> value)
+				if (binding->value)
 					binding_value_dereference
-						(&binding -> value, MDL);
+						(&binding->value, MDL);
 				status = 1;
 			} else
 				status = 0;
 #if defined (DEBUG_EXPRESSIONS)
-			log_debug ("exec: unset %s: %s", r -> data.unset,
+			log_debug ("exec: unset %s: %s", r->data.unset,
 				   (status ? "found" : "not found"));
 #else
 			POST(status);
@@ -483,10 +495,9 @@ int execute_statements (result, packet, lease, client_state,
 				    	binding_scope_reference(&ns->outer,
 								*scope, MDL);
 				execute_statements
-				      (result, packet, lease,
-				       client_state,
+				      (result, packet, lease, client_state,
 				       in_options, out_options,
-				       &ns, e->data.let.statements);
+				       &ns, e->data.let.statements, on_star);
 			}
 			if (ns)
 				binding_scope_dereference(&ns, MDL);
@@ -497,15 +508,14 @@ int execute_statements (result, packet, lease, client_state,
 			status = (evaluate_data_expression
 				  (&ds, packet,
 				   lease, client_state, in_options,
-				   out_options, scope, r -> data.log.expr,
-				   MDL));
-			
+				   out_options, scope, r->data.log.expr, MDL));
+
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: log");
 #endif
 
 			if (status) {
-				switch (r -> data.log.priority) {
+				switch (r->data.log.priority) {
 				case log_priority_fatal:
 					log_fatal ("%.*s", (int)ds.len,
 						ds.data);
@@ -526,6 +536,14 @@ int execute_statements (result, packet, lease, client_state,
 				data_string_forget (&ds, MDL);
 			}
 
+			break;
+
+		      case vendor_opt_statement:
+		        /* If possible parse any options in a vendor option
+			 * encapsulation, this may add options to the in_options
+			 * option state */
+			parse_vendor_option(packet, lease, client_state,
+					    in_options, out_options, scope);
 			break;
 
 		      default:
@@ -551,7 +569,7 @@ int execute_statements (result, packet, lease, client_state,
 
 void execute_statements_in_scope (result, packet,
 				  lease, client_state, in_options, out_options,
-				  scope, group, limiting_group)
+				  scope, group, limiting_group, on_star)
 	struct binding_value **result;
 	struct packet *packet;
 	struct lease *lease;
@@ -561,6 +579,7 @@ void execute_statements_in_scope (result, packet,
 	struct binding_scope **scope;
 	struct group *group;
 	struct group *limiting_group;
+	struct on_star *on_star;
 {
 	struct group *limit;
 
@@ -600,9 +619,10 @@ void execute_statements_in_scope (result, packet,
 		execute_statements_in_scope (result, packet,
 					     lease, client_state,
 					     in_options, out_options, scope,
-					     group -> next, limiting_group);
+					     group->next, limiting_group,
+					     on_star);
 	execute_statements (result, packet, lease, client_state, in_options,
-			    out_options, scope, group -> statements);
+			    out_options, scope, group->statements, on_star);
 }
 
 /* Dereference or free any subexpressions of a statement being freed. */
@@ -916,7 +936,7 @@ void write_statements (file, statements, indent)
 				token_indent_data_string
 					(file, col, indent + 8, "", "",
 					 &r -> data.option -> data);
-					 
+
 			fprintf (file, ";"); /* XXX */
 			break;
 
@@ -932,7 +952,7 @@ void write_statements (file, statements, indent)
 			(void) token_print_indent (file, col, indent + 4,
 						  " ", "", ";");
 			break;
-			
+
 		      case unset_statement:
 			indent_spaces (file, indent);
 			fprintf (file, "unset ");
@@ -1001,7 +1021,12 @@ void write_statements (file, statements, indent)
                                   "is not defined).", MDL);
 #endif /* ENABLE_EXECUTE */
                         break;
-			
+
+		      case vendor_opt_statement:
+			indent_spaces (file, indent);
+			fprintf (file, "parse-vendor-option;");
+			break;
+
 		      default:
 			log_fatal ("bogus statement type %d\n", r -> op);
 		}
@@ -1041,14 +1066,14 @@ int find_matching_case (struct executable_statement **ep,
 				sub = (evaluate_data_expression
 				       (&cd, packet, lease, client_state,
 					in_options, out_options,
-					scope, s -> data.c_case, MDL));
+					scope, s->data.c_case, MDL));
 				if (sub && cd.len == ds.len &&
 				    !memcmp (cd.data, ds.data, cd.len))
 				{
 					data_string_forget (&cd, MDL);
 					data_string_forget (&ds, MDL);
 					executable_statement_reference
-						(ep, s -> next, MDL);
+						(ep, s->next, MDL);
 					return 1;
 				}
 				data_string_forget (&cd, MDL);
@@ -1064,15 +1089,15 @@ int find_matching_case (struct executable_statement **ep,
 						      scope, expr);
 
 		if (status) {
-		    for (s = stmt; s; s = s -> next) {
+		    for (s = stmt; s; s = s->next) {
 			if (s -> op == case_statement) {
 				sub = (evaluate_numeric_expression
 				       (&c, packet, lease, client_state,
 					in_options, out_options,
-					scope, s -> data.c_case));
+					scope, s->data.c_case));
 				if (sub && n == c) {
 					executable_statement_reference
-						(ep, s -> next, MDL);
+						(ep, s->next, MDL);
 					return 1;
 				}
 			}
@@ -1082,11 +1107,11 @@ int find_matching_case (struct executable_statement **ep,
 
 	/* If we didn't find a matching case statement, look for a default
 	   statement and return the statement following it. */
-	for (s = stmt; s; s = s -> next)
-		if (s -> op == default_statement)
+	for (s = stmt; s; s = s->next)
+		if (s->op == default_statement)
 			break;
 	if (s) {
-		executable_statement_reference (ep, s -> next, MDL);
+		executable_statement_reference (ep, s->next, MDL);
 		return 1;
 	}
 	return 0;
@@ -1101,17 +1126,17 @@ int executable_statement_foreach (struct executable_statement *stmt,
 	struct executable_statement *foo;
 	int ok = 0;
 
-	for (foo = stmt; foo; foo = foo -> next) {
+	for (foo = stmt; foo; foo = foo->next) {
 	    if ((*callback) (foo, vp, condp) != 0)
 		ok = 1;
-	    switch (foo -> op) {
+	    switch (foo->op) {
 	      case null_statement:
 		break;
 	      case if_statement:
-		if (executable_statement_foreach (foo -> data.ie.tc,
+		if (executable_statement_foreach (foo->data.ie.tc,
 						  callback, vp, 1))
 			ok = 1;
-		if (executable_statement_foreach (foo -> data.ie.fc,
+		if (executable_statement_foreach (foo->data.ie.fc,
 						  callback, vp, 1))
 			ok = 1;
 		break;
@@ -1133,17 +1158,17 @@ int executable_statement_foreach (struct executable_statement *stmt,
 		break;
 	      case statements_statement:
 		if ((executable_statement_foreach
-		     (foo -> data.statements, callback, vp, condp)))
+		     (foo->data.statements, callback, vp, condp)))
 			ok = 1;
 		break;
 	      case on_statement:
 		if ((executable_statement_foreach
-		     (foo -> data.on.statements, callback, vp, 1)))
+		     (foo->data.on.statements, callback, vp, 1)))
 			ok = 1;
 		break;
 	      case switch_statement:
 		if ((executable_statement_foreach
-		     (foo -> data.s_switch.statements, callback, vp, 1)))
+		     (foo->data.s_switch.statements, callback, vp, 1)))
 			ok = 1;
 		break;
 	      case case_statement:
@@ -1156,14 +1181,15 @@ int executable_statement_foreach (struct executable_statement *stmt,
 		break;
 	      case let_statement:
 		if ((executable_statement_foreach
-		     (foo -> data.let.statements, callback, vp, 0)))
+		     (foo->data.let.statements, callback, vp, 0)))
 			ok = 1;
 		break;
 	      case define_statement:
 		break;
 	      case log_statement:
 	      case return_statement:
-              case execute_statement:
+	      case execute_statement:
+	      case vendor_opt_statement:
 		break;
 	    }
 	}
