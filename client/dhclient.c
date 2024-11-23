@@ -38,6 +38,8 @@
 #include <sys/wait.h>
 #include <limits.h>
 
+struct collection *collections;
+
 TIME default_lease_time = 43200; /* 12 hours... */
 TIME max_lease_time = 86400; /* 24 hours... */
 
@@ -72,8 +74,8 @@ static const char message [] = "Internet Systems Consortium DHCP Client";
 static const char url [] = 
 "For info, please visit https://www.isc.org/software/dhcp/";
 
-u_int16_t local_port = 0;
-u_int16_t remote_port = 0;
+extern u_int16_t local_port;
+extern u_int16_t remote_port;
 int no_daemon = 0;
 struct string_list *client_env = NULL;
 int client_env_count = 0;
