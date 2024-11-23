@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -DLOCALSTATEDIR='"@localstatedir@"'
+AM_CPPFLAGS = -I$(srcdir)/../includes -DLOCALSTATEDIR='"@localstatedir@"'
 
 sbin_PROGRAMS = dhcrelay
 dhcrelay_SOURCES = dhcrelay.c

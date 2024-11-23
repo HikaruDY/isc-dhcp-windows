@@ -322,6 +322,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+AM_CPPFLAGS = -I$(srcdir)/../includes
 lib_LIBRARIES = libomapi.a
 libomapi_a_SOURCES = protocol.c buffer.c alloc.c result.c connection.c \
 		     errwarn.c listener.c dispatch.c generic.c support.c \

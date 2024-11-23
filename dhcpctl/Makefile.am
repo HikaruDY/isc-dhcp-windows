@@ -1,3 +1,5 @@
+AM_CPPFLAGS = -I$(srcdir)/../includes
+
 bin_PROGRAMS = omshell
 lib_LIBRARIES = libdhcpctl.a
 noinst_PROGRAMS = cltest

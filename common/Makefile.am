@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I.. -DLOCALSTATEDIR='"@localstatedir@"'
+AM_CPPFLAGS = -I$(srcdir)/.. -I$(srcdir)/../includes -DLOCALSTATEDIR='"@localstatedir@"'
 
 noinst_LIBRARIES = libdhcp.a
 libdhcp_a_SOURCES = alloc.c bpf.c comapi.c conflex.c ctrace.c discover.c \

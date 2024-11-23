@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -DMINIRES_LIB -DHMAC_MD5
+AM_CPPFLAGS = -I$(srcdir)/../includes -DMINIRES_LIB -DHMAC_MD5
 
 noinst_LIBRARIES = libres.a
 

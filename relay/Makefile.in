@@ -336,7 +336,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CPPFLAGS = -DLOCALSTATEDIR='"@localstatedir@"'
+AM_CPPFLAGS = -I$(srcdir)/../includes -DLOCALSTATEDIR='"@localstatedir@"'
 dhcrelay_SOURCES = dhcrelay.c
 dhcrelay_LDADD = ../common/libdhcp.a ../omapip/libomapi.a ../dst/libdst.a ../minires/libres.a
 man_MANS = dhcrelay.8

@@ -1,3 +1,5 @@
+AM_CPPFLAGS = -I$(srcdir)/../includes
+
 lib_LIBRARIES = libomapi.a
 noinst_PROGRAMS = svtest
 
@@ -10,4 +12,3 @@ EXTRA_DIST = $(man_MANS)
 
 svtest_SOURCES = test.c
 svtest_LDADD = libomapi.a ../dst/libdst.a
-

@@ -1,3 +1,5 @@
+AM_CPPFLAGS = -I$(srcdir)/../includes
+
 dist_sysconf_DATA = dhclient.conf.example
 sbin_PROGRAMS = dhclient
 dhclient_SOURCES = clparse.c dhclient.c dhc6.c \
@@ -11,8 +13,8 @@ EXTRA_DIST = $(man_MANS)
 
 dhclient.o: dhclient.c
 	$(COMPILE) -DCLIENT_PATH='"PATH=$(sbindir):/sbin:/bin:/usr/sbin:/usr/bin"' \
-		   -DLOCALSTATEDIR='"$(localstatedir)"' -c dhclient.c
+		   -DLOCALSTATEDIR='"$(localstatedir)"' -c $(srcdir)/dhclient.c
 
 dhc6.o: dhc6.c
 	$(COMPILE) -DCLIENT_PATH='"PATH=$(sbindir):/sbin:/bin:/usr/sbin:/usr/bin"' \
-		   -DLOCALSTATEDIR='"$(localstatedir)"' -c dhc6.c
+		   -DLOCALSTATEDIR='"$(localstatedir)"' -c $(srcdir)/dhc6.c
