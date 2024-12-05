@@ -40,6 +40,7 @@ fi
 AC_USE_SYSTEM_EXTENSIONS
 
 AC_PROG_RANLIB
+AC_CHECK_TOOL(AR, ar)
 AC_CONFIG_HEADERS([includes/config.h])
 
 # we sometimes need to know byte order for building packets
