@@ -1,5 +1,5 @@
                 Internet Systems Consortium DHCP Distribution
-                          Version 4.4.3-P1
+                          Version 4.4.4.0
                             October 5, 2022
                             Release Notes
 
@@ -7,7 +7,7 @@ Please note that that ISC DHCP is licensed under the Mozilla Public
 License, MPL 2.0. Please see https://www.mozilla.org/en-US/MPL/2.0/ to read
 the MPL 2.0 license terms.
 
-NOTE: This software is now End-Of-Life. 4.4.3 is the final release planned. 
+NOTE: This software is now End-Of-Life. 4.4.3 is the final release planned.
 We will continue to keep the public issue tracker and user mailing list open.
 
 For information on how to install, configure, and run this software, as
