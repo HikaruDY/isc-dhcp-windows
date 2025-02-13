@@ -505,6 +505,7 @@ get_hw_addr(const char *name, struct hardware *hw) {
 	sa = &tmp.ifr_hwaddr;
 	switch (sa->sa_family) {
 		case ARPHRD_ETHER:
+		case ARPHRD_PPP:
 			hw->hlen = 7;
 			hw->hbuf[0] = HTYPE_ETHER;
 			memcpy(&hw->hbuf[1], sa->sa_data, 6);
