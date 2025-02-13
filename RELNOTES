@@ -1,15 +1,15 @@
               Internet Systems Consortium DHCP Distribution
 
-                           Version 4.1-ESV-R16-P2
+                           Version 4.1.17.0
                               5 October 2022
                                Release Notes
 
-Version 4.1-ESV-R16-P2 is a security release of an extended support version
+Version 4.1.17.0 is a security release of an extended support version
 (ESV) fixing a possible reference counter overflow in the server while adding
 options to lease query responses and a possible memory leak in the client and
-server when parsing inbound packets with malformed FQDN options.  
+server when parsing inbound packets with malformed FQDN options.
 
-NOTE: This software is now End-Of-Life. This is the final release planned. 
+NOTE: This software is now End-Of-Life. This is the final release planned.
 We will continue to keep the public issue tracker and user mailing list open.
 
 ISC DHCP 4.1.x includes several new DHCPv6 features that were not included
@@ -59,7 +59,7 @@ Our next major version of ISC DHCP, version 4.4.0, has been re-licensed under
 the Mozilla Public License, MPL 2.0.  To read the MPL 2.0 license terms, please
 refer to: https://www.mozilla.org/en-US/MPL/2.0/.
 
-This branch, 4.1-ESV, remains under the ISC license.  
+This branch, 4.1-ESV, remains under the ISC license.
 Those unsure whether or not the license change affects their use of
 ISC DHCP, or who wish to discuss how to comply with the license may contact
 ISC at info@isc.org or use https://www.isc.org/mission/contact/.
